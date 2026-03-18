@@ -10,10 +10,14 @@ import {
   Text,
   TextInput,
   View,
+  Modal,
+  ScrollView,
 } from 'react-native';
 
-import { useAppHydration, useAppStore } from '@/stores/use-app-store';
+import { useAppHydration, useAppStore, TaskPriority, TaskStatus } from '@/stores/use-app-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { trackTaskCreated } from '@/utils/analytics';
 
 type FilterOption = 'all' | 'open' | 'done';
 
@@ -32,8 +36,10 @@ export default function TaskListScreen() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<TaskPriority>('medium');
   const [titleError, setTitleError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const filteredTasks = useMemo(() => {
     if (filter === 'open') {
@@ -45,7 +51,7 @@ export default function TaskListScreen() {
     return tasks;
   }, [tasks, filter]);
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
 
@@ -54,10 +60,14 @@ export default function TaskListScreen() {
       return;
     }
 
-    createTask(trimmedTitle, trimmedDescription);
+    createTask(trimmedTitle, trimmedDescription, priority);
+    await trackTaskCreated(trimmedTitle, priority);
+    
     setTitle('');
     setDescription('');
+    setPriority('medium');
     setTitleError('');
+    setShowCreateModal(false);
   };
 
   const onRefresh = () => {
@@ -83,96 +93,181 @@ export default function TaskListScreen() {
       <Pressable
         onPress={() => setFilter(value)}
         style={[styles.filterButton, isActive && styles.filterButtonActive]}>
-        <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>{label}</Text>
+        <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+          {label}
+        </Text>
       </Pressable>
     );
   };
 
+  const getPriorityColor = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'high':
+        return '#ef4444';
+      case 'medium':
+        return '#f59e0b';
+      case 'low':
+        return '#10b981';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  const getStatusIcon = (status: TaskStatus) => {
+    switch (status) {
+      case 'completed':
+        return 'check-circle';
+      case 'in-progress':
+        return 'progress-clock';
+      default:
+        return 'circle-outline';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-    <KeyboardAvoidingView
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-      style={styles.container}>
-      <FlatList
-        data={filteredTasks}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={
-          <View style={styles.headerContent}>
-            {Platform.OS === 'web' && usedFallback ? (
-              <View style={styles.warningBanner}>
-                <Text style={styles.warningText}>Storage is unavailable in this browser session. Data may not persist.</Text>
-              </View>
-            ) : null}
-            <Text style={styles.title}>TaskTrack</Text>
-            <Text style={styles.subtitle}>Create and manage your tasks locally.</Text>
-
-            <View style={styles.formCard}>
-              <Text style={styles.sectionTitle}>Create Task</Text>
-              <TextInput
-                value={title}
-                onChangeText={(value) => {
-                  setTitle(value);
-                  if (titleError) {
-                    setTitleError('');
-                  }
-                }}
-                placeholder="Task title"
-                style={[styles.input, titleError ? styles.inputError : null]}
-                returnKeyType="next"
-              />
-              {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Description (optional)"
-                style={[styles.input, styles.multilineInput]}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-              <Pressable style={styles.primaryButton} onPress={handleCreateTask}>
-                <Text style={styles.primaryButtonText}>Add Task</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.filterRow}>
-              {renderFilter('all', 'All')}
-              {renderFilter('open', 'Open')}
-              {renderFilter('done', 'Done')}
-            </View>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.taskCard}
-            onPress={() =>
-              router.push({
-                pathname: '/task/[id]',
-                params: { id: item.id },
-              })
-            }>
-            <View style={styles.taskHeader}>
-              <Text style={styles.taskTitle}>{item.title}</Text>
-              <Text style={[styles.statusBadge, item.completed ? styles.doneBadge : styles.openBadge]}>
-                {item.completed ? 'Done' : 'Open'}
-              </Text>
-            </View>
-            <Text style={styles.taskDescription}>{item.description || 'No description added.'}</Text>
-            <View style={styles.rowActions}>
-              <Pressable onPress={() => toggleTask(item.id)} style={styles.inlineButton}>
-                <Text style={styles.inlineButtonText}>{item.completed ? 'Mark Open' : 'Mark Done'}</Text>
-              </Pressable>
-              <Pressable onPress={() => deleteTask(item.id)} style={styles.inlineDeleteButton}>
-                <Text style={styles.inlineDeleteText}>Delete</Text>
-              </Pressable>
-            </View>
+      <KeyboardAvoidingView
+        behavior={Platform.select({ ios: 'padding', android: undefined })}
+        style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>My Tasks</Text>
+          <Pressable style={styles.addButton} onPress={() => setShowCreateModal(true)}>
+            <MaterialCommunityIcons name="plus" size={24} color="#fff" />
           </Pressable>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyText}>No tasks yet. Create your first task above.</Text>}
-      />
-    </KeyboardAvoidingView>
+        </View>
+
+        <View style={styles.filterContainer}>{renderFilter('all', 'All')} {renderFilter('open', 'Open')} {renderFilter('done', 'Done')}</View>
+
+        <FlatList
+          data={filteredTasks}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => router.push(`/task/${item.id}`)}
+              style={[styles.taskCard, item.completed && styles.taskCardCompleted]}>
+              <View style={styles.taskHeader}>
+                <View style={styles.taskTitleContainer}>
+                  <MaterialCommunityIcons
+                    name={getStatusIcon(item.status)}
+                    size={20}
+                    color={item.completed ? '#10b981' : '#6b7280'}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={[styles.taskTitle, item.completed && styles.taskTitleCompleted]}>
+                    {item.title}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.priorityBadge,
+                    { backgroundColor: getPriorityColor(item.priority) },
+                  ]}>
+                  <Text style={styles.priorityText}>{item.priority}</Text>
+                </View>
+              </View>
+
+              {item.description ? (
+                <Text style={styles.taskDescription} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              ) : null}
+
+              <View style={styles.taskMeta}>
+                {item.photos.length > 0 && (
+                  <View style={styles.metaItem}>
+                    <MaterialCommunityIcons name="camera" size={14} color="#6b7280" />
+                    <Text style={styles.metaText}>{item.photos.length}</Text>
+                  </View>
+                )}
+                {item.location && (
+                  <View style={styles.metaItem}>
+                    <MaterialCommunityIcons name="map-marker" size={14} color="#6b7280" />
+                    <Text style={styles.metaText}>Located</Text>
+                  </View>
+                )}
+                <Pressable
+                  onPress={() => toggleTask(item.id)}
+                  style={styles.completeButton}>
+                  <MaterialCommunityIcons
+                    name={item.completed ? 'check-circle' : 'checkbox-blank-circle-outline'}
+                    size={18}
+                    color={item.completed ? '#10b981' : '#cbd5e1'}
+                  />
+                </Pressable>
+              </View>
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons name="clipboard-text-outline" size={48} color="#cbd5e1" />
+              <Text style={styles.emptyText}>No tasks yet. Create one to get started!</Text>
+            </View>
+          }
+        />
+
+        <Modal
+          visible={showCreateModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowCreateModal(false)}>
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Pressable onPress={() => setShowCreateModal(false)}>
+                  <Text style={styles.modalCloseText}>Cancel</Text>
+                </Pressable>
+                <Text style={styles.modalTitle}>New Task</Text>
+                <Pressable onPress={handleCreateTask}>
+                  <Text style={styles.modalSaveText}>Save</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView style={styles.modalFormContainer}>
+                <Text style={styles.formLabel}>Title *</Text>
+                <TextInput
+                  value={title}
+                  onChangeText={(value) => {
+                    setTitle(value);
+                    if (titleError) setTitleError('');
+                  }}
+                  style={styles.input}
+                  placeholder="Task title"
+                  placeholderTextColor="#cbd5e1"
+                />
+                {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
+                <Text style={styles.formLabel}>Description</Text>
+                <TextInput
+                  value={description}
+                  onChangeText={setDescription}
+                  style={[styles.input, styles.inputMultiline]}
+                  placeholder="Add details..."
+                  placeholderTextColor="#cbd5e1"
+                  multiline
+                  numberOfLines={4}
+                />
+
+                <Text style={styles.formLabel}>Priority</Text>
+                <View style={styles.priorityContainer}>
+                  {(['low', 'medium', 'high'] as TaskPriority[]).map((p) => (
+                    <Pressable
+                      key={p}
+                      onPress={() => setPriority(p)}
+                      style={[
+                        styles.priorityOption,
+                        priority === p && styles.priorityOptionSelected,
+                      ]}>
+                      <Text style={styles.priorityOptionText}>{p}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          </SafeAreaView>
+        </Modal>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -196,66 +291,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#334155',
   },
-  listContent: {
-    padding: 16,
-    gap: 10,
-  },
-  headerContent: {
-    gap: 12,
-    marginBottom: 4,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: '#0f172a',
   },
-  subtitle: {
-    color: '#475569',
-    fontSize: 14,
-  },
-  formCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 8,
-  },
-  sectionTitle: {
-    fontWeight: '600',
-    fontSize: 16,
-    color: '#0f172a',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-  },
-  inputError: {
-    borderColor: '#dc2626',
-  },
-  multilineInput: {
-    minHeight: 90,
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 12,
-  },
-  primaryButton: {
+  addButton: {
     backgroundColor: '#0f766e',
-    borderRadius: 10,
-    paddingVertical: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  filterRow: {
+  filterContainer: {
     flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     gap: 8,
   },
   filterButton: {
@@ -264,6 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
+    backgroundColor: '#ffff',
   },
   filterButtonActive: {
     backgroundColor: '#0f766e',
@@ -272,17 +333,25 @@ const styles = StyleSheet.create({
   filterButtonText: {
     color: '#334155',
     fontWeight: '500',
+    fontSize: 14,
   },
   filterButtonTextActive: {
     color: '#ffffff',
   },
+  listContent: {
+    padding: 12,
+    gap: 10,
+  },
   taskCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 14,
     gap: 10,
+  },
+  taskCardCompleted: {
+    opacity: 0.7,
   },
   taskHeader: {
     flexDirection: 'row',
@@ -290,73 +359,147 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  taskTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   taskTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#0f172a',
     flex: 1,
   },
-  statusBadge: {
-    fontSize: 12,
-    fontWeight: '600',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  doneBadge: {
-    backgroundColor: '#dcfce7',
-    color: '#166534',
-  },
-  openBadge: {
-    backgroundColor: '#dbeafe',
-    color: '#1d4ed8',
+  taskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    color: '#94a3b8',
   },
   taskDescription: {
-    color: '#475569',
+    color: '#64748b',
     fontSize: 14,
+    lineHeight: 20,
   },
-  rowActions: {
+  priorityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  priorityText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  taskMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
   },
-  inlineButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#0f766e',
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  inlineButtonText: {
-    color: '#0f766e',
-    fontWeight: '600',
+  metaText: {
+    color: '#64748b',
+    fontSize: 12,
   },
-  inlineDeleteButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dc2626',
+  completeButton: {
+    marginLeft: 'auto',
   },
-  inlineDeleteText: {
-    color: '#dc2626',
-    fontWeight: '600',
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   emptyText: {
-    textAlign: 'center',
+    color: '#94a3b8',
+    fontSize: 14,
+    marginTop: 12,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalCloseText: {
     color: '#64748b',
-    marginTop: 24,
-  },
-  warningBanner: {
-    backgroundColor: '#fef9c3',
-    borderColor: '#facc15',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-  },
-  warningText: {
-    color: '#713f12',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '500',
   },
+  modalSaveText: {
+    color: '#0f766e',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  modalFormContainer: {
+    flex: 1,
+    padding: 16,
+    gap: 14,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0f172a',
+    marginBottom: 4,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#ffffff',
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  inputMultiline: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginTop: -10,
+  },
+  priorityContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  priorityOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  priorityOptionSelected: {
+    backgroundColor: '#0f766e',
+    borderColor: '#0f766e',
+  },
+  priorityOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+  },
 });
+

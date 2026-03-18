@@ -4,12 +4,26 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 type TaskFilter = 'all' | 'open' | 'done';
+export type TaskStatus = 'open' | 'in-progress' | 'completed';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
+export type LocationData = {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+  address?: string;
+};
 
 export type Task = {
   id: string;
   title: string;
   description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
   completed: boolean;
+  photos: string[]; // Array of photo URIs (up to 3)
+  location?: LocationData;
   createdAt: string;
   updatedAt: string;
 };
@@ -21,10 +35,21 @@ type AppState = {
   filter: TaskFilter;
   login: (userName: string) => void;
   logout: () => void;
-  createTask: (title: string, description?: string) => void;
-  updateTask: (id: string, changes: Partial<Pick<Task, 'title' | 'description'>>) => void;
+  createTask: (
+    title: string,
+    description?: string,
+    priority?: TaskPriority,
+    location?: LocationData
+  ) => void;
+  updateTask: (
+    id: string,
+    changes: Partial<Omit<Task, 'id' | 'createdAt'>>
+  ) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
+  addPhotoToTask: (taskId: string, photoUri: string) => void;
+  removePhotoFromTask: (taskId: string, photoIndex: number) => void;
+  updateTaskLocation: (taskId: string, location: LocationData) => void;
   setFilter: (filter: TaskFilter) => void;
 };
 
@@ -49,14 +74,18 @@ export const useAppStore = create<AppState>()(
           filter: 'all',
         }),
 
-      createTask: (title, description = '') =>
+      createTask: (title, description = '', priority = 'medium', location) =>
         set((state) => ({
           tasks: [
             {
               id: createTaskId(),
               title,
               description,
+              status: 'open',
+              priority,
               completed: false,
+              photos: [],
+              location,
               createdAt: nowIso(),
               updatedAt: nowIso(),
             },
@@ -86,6 +115,46 @@ export const useAppStore = create<AppState>()(
               ? {
                   ...task,
                   completed: !task.completed,
+                  status: !task.completed ? 'completed' : 'open',
+                  updatedAt: nowIso(),
+                }
+              : task,
+          ),
+        })),
+
+      addPhotoToTask: (taskId, photoUri) =>
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId && task.photos.length < 3
+              ? {
+                  ...task,
+                  photos: [...task.photos, photoUri],
+                  updatedAt: nowIso(),
+                }
+              : task,
+          ),
+        })),
+
+      removePhotoFromTask: (taskId, photoIndex) =>
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  photos: task.photos.filter((_, idx) => idx !== photoIndex),
+                  updatedAt: nowIso(),
+                }
+              : task,
+          ),
+        })),
+
+      updateTaskLocation: (taskId, location) =>
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  location,
                   updatedAt: nowIso(),
                 }
               : task,
