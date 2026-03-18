@@ -1,40 +1,12 @@
-// Analytics helper for development and production
-// Mixpanel is optional - app works without it
-
-let mixpanel: any = null;
-let mixpanelInitialized = false;
+// Analytics helper - uses console logging for development
+// Mixpanel integration removed for Expo Go compatibility
 
 export const initializeMixpanel = async () => {
-  if (mixpanelInitialized) return;
-  mixpanelInitialized = true;
-
-  try {
-    // Optional import - only load if available
-    const { Mixpanel } = await import('mixpanel-react-native');
-    if (Mixpanel) {
-      mixpanel = new Mixpanel('fc1d8ea18b7cc8f3b1e7f4d9a2c5b6e9', false);
-      await mixpanel.init();
-      console.log('✅ Mixpanel initialized');
-    }
-  } catch (error) {
-    console.log('ℹ️  Mixpanel not available (using console tracking instead)');
-    mixpanel = null;
-  }
+  console.log('📊 Analytics logging initialized');
 };
 
 export const trackEvent = async (eventName: string, properties?: Record<string, any>) => {
   const eventData = { ...properties, timestamp: new Date().toISOString() };
-
-  // Try Mixpanel if available
-  if (mixpanel) {
-    try {
-      await mixpanel.track(eventName, eventData);
-    } catch (error) {
-      // Silently fail
-    }
-  }
-
-  // Always log for development
   console.log(`📊 [Analytics] ${eventName}`, eventData);
 };
 
