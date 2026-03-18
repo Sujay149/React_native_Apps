@@ -27,7 +27,15 @@ export default function TaskDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const taskId = params.id;
   const { hasHydrated } = useAppHydration();
-  const { tasks, isAuthenticated, updateTask, addPhotoToTask, removePhotoFromTask, updateTaskLocation } =
+  const {
+    tasks,
+    isAuthenticated,
+    updateTask,
+    deleteTask,
+    addPhotoToTask,
+    removePhotoFromTask,
+    updateTaskLocation,
+  } =
     useAppStore();
 
   const task = useMemo(() => tasks.find((item) => item.id === taskId), [taskId, tasks]);
@@ -115,6 +123,20 @@ export default function TaskDetailScreen() {
         text: 'Remove',
         style: 'destructive',
         onPress: () => removePhotoFromTask(taskId, index),
+      },
+    ]);
+  };
+
+  const handleDeleteTask = () => {
+    Alert.alert('Delete Task', 'Are you sure you want to delete this task?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          deleteTask(taskId);
+          router.replace('/(tabs)');
+        },
       },
     ]);
   };
@@ -268,6 +290,11 @@ export default function TaskDetailScreen() {
               <MaterialCommunityIcons name="content-save" size={20} color="#fff" />
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </Pressable>
+
+            <Pressable style={styles.deleteButton} onPress={handleDeleteTask}>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#fff" />
+              <Text style={styles.deleteButtonText}>Delete Task</Text>
+            </Pressable>
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -337,6 +364,8 @@ const styles = StyleSheet.create({
   metaText: { fontSize: 12, color: '#64748b' },
   saveButton: { backgroundColor: '#0f766e', borderRadius: 10, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   saveButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  deleteButton: { backgroundColor: '#dc2626', borderRadius: 10, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+  deleteButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   photoModalContainer: { flex: 1, backgroundColor: '#f8fafc' },
   photoModalContent: { flex: 1, paddingHorizontal: 16 },
   photoModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },

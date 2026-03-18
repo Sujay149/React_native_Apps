@@ -111,15 +111,25 @@ export const useAppStore = create<AppState>()(
 
       updateTask: (id, changes) =>
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id
-              ? {
-                  ...task,
-                  ...changes,
-                  updatedAt: nowIso(),
-                }
-              : task,
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id !== id) {
+              return task;
+            }
+
+            const nextTask = {
+              ...task,
+              ...changes,
+              updatedAt: nowIso(),
+            };
+
+            if (changes.status !== undefined) {
+              nextTask.completed = changes.status === 'completed';
+            } else if (changes.completed !== undefined) {
+              nextTask.status = changes.completed ? 'completed' : 'open';
+            }
+
+            return nextTask;
+          }),
         })),
 
       deleteTask: (id) => set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id) })),
