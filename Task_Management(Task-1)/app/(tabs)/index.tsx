@@ -136,7 +136,11 @@ export default function TaskListScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.filterContainer}>{renderFilter('all', 'All')} {renderFilter('open', 'Open')} {renderFilter('done', 'Done')}</View>
+        <View style={styles.filterContainer}>
+          {renderFilter('all', 'All')}
+          {renderFilter('open', 'Open')}
+          {renderFilter('done', 'Done')}
+        </View>
 
         <FlatList
           data={filteredTasks}
@@ -175,7 +179,7 @@ export default function TaskListScreen() {
               ) : null}
 
               <View style={styles.taskMeta}>
-                {item.photos.length > 0 && (
+                {item.photos && item.photos.length > 0 && (
                   <View style={styles.metaItem}>
                     <MaterialCommunityIcons name="camera" size={14} color="#6b7280" />
                     <Text style={styles.metaText}>{item.photos.length}</Text>
