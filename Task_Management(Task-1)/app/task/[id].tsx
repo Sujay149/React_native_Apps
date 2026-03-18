@@ -200,16 +200,16 @@ export default function TaskDetailScreen() {
 
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.label}>Photos ({task.photos.length}/3)</Text>
+                <Text style={styles.label}>Photos ({(task?.photos?.length || 0)}/3)</Text>
                 <Pressable
                   onPress={() => setShowPhotoModal(true)}
-                  disabled={task.photos.length >= 3}
+                  disabled={(task?.photos?.length || 0) >= 3}
                   style={styles.addPhotoBtn}>
                   <MaterialCommunityIcons name="plus" size={20} color="#0f766e" />
                 </Pressable>
               </View>
 
-              {task.photos.length > 0 && (
+              {(task?.photos?.length || 0) > 0 && (
                 <FlatList
                   data={task.photos}
                   keyExtractor={(_, idx) => idx.toString()}

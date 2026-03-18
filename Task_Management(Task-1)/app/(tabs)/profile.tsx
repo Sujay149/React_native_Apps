@@ -16,7 +16,7 @@ export default function ProfileScreen() {
   const openCount = tasks.length - doneCount;
   const inProgressCount = tasks.filter((task) => task.status === 'in-progress').length;
   const completionRate = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
-  const photosCount = tasks.reduce((sum, task) => sum + task.photos.length, 0);
+  const photosCount = tasks.reduce((sum, task) => sum + (task.photos?.length || 0), 0);
   const locationsCount = tasks.filter((task) => task.location).length;
 
   useFocusEffect(
