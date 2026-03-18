@@ -1,13 +1,13 @@
 import { Redirect } from 'expo-router';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 import { useAppHydration, useAppStore } from '@/stores/use-app-store';
 
 export default function IndexRoute() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
-  const { hasHydrated } = useAppHydration();
+  const { hasHydrated, usedFallback } = useAppHydration();
 
-  if (!hasHydrated && Platform.OS !== 'web') {
+  if (!hasHydrated && !usedFallback) {
     return (
       <View style={styles.container}>
         <Text style={styles.text}>Preparing TaskTrack...</Text>

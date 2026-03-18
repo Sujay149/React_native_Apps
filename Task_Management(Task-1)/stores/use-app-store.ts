@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -193,7 +194,15 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'tasktrack-app-state',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        Platform.OS === 'web'
+          ? {
+              getItem: (name) => Promise.resolve(window.localStorage.getItem(name)),
+              setItem: (name, value) => Promise.resolve(window.localStorage.setItem(name, value)),
+              removeItem: (name) => Promise.resolve(window.localStorage.removeItem(name)),
+            }
+          : AsyncStorage
+      ),
       partialize: (state) => ({
         ...state,
         tasks: state.tasks.map((task) => normalizeTask(task)),
