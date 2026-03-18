@@ -61,7 +61,7 @@ export default function TaskListScreen() {
     }
 
     createTask(trimmedTitle, trimmedDescription, priority);
-    await trackTaskCreated(trimmedTitle, priority);
+    trackTaskCreated(trimmedTitle, priority);
     
     setTitle('');
     setDescription('');

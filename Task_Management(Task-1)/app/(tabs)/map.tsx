@@ -1,5 +1,5 @@
 import { Redirect, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -68,7 +68,6 @@ const LEAFLET_HTML = `
 export default function MapScreen() {
   const { hasHydrated } = useAppHydration();
   const { tasks, isAuthenticated } = useAppStore();
-  const [loading, setLoading] = useState(true);
   const webViewRef = React.useRef<WebView>(null);
 
   const tasksWithLocation = tasks.filter((task) => task.location);
@@ -122,7 +121,6 @@ export default function MapScreen() {
           ref={webViewRef}
           source={{ html: LEAFLET_HTML }}
           style={styles.webview}
-          onLoadEnd={() => setLoading(false)}
           startInLoadingState
           renderLoading={() => (
             <View style={styles.webviewLoading}>

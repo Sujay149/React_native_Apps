@@ -1,77 +1,67 @@
-import { Mixpanel } from 'mixpanel-react-native';
+// Analytics helper for development and production
+// Mixpanel is optional - app works without it
 
-const MIXPANEL_TOKEN = 'fc1d8ea18b7cc8f3b1e7f4d9a2c5b6e9'; // Replace with your actual token
-
-let mixpanel: Mixpanel | null = null;
+let mixpanel: any = null;
+let mixpanelInitialized = false;
 
 export const initializeMixpanel = async () => {
+  if (mixpanelInitialized) return;
+  mixpanelInitialized = true;
+
   try {
-    mixpanel = new Mixpanel(MIXPANEL_TOKEN, false);
-    await mixpanel.init();
-    console.log('Mixpanel initialized successfully');
+    // Optional import - only load if available
+    const { Mixpanel } = await import('mixpanel-react-native');
+    if (Mixpanel) {
+      mixpanel = new Mixpanel('fc1d8ea18b7cc8f3b1e7f4d9a2c5b6e9', false);
+      await mixpanel.init();
+      console.log('✅ Mixpanel initialized');
+    }
   } catch (error) {
-    console.error('Failed to initialize Mixpanel:', error);
+    console.log('ℹ️  Mixpanel not available (using console tracking instead)');
+    mixpanel = null;
   }
 };
 
 export const trackEvent = async (eventName: string, properties?: Record<string, any>) => {
-  if (!mixpanel) {
-    console.warn('Mixpanel not initialized');
-    return;
+  const eventData = { ...properties, timestamp: new Date().toISOString() };
+
+  // Try Mixpanel if available
+  if (mixpanel) {
+    try {
+      await mixpanel.track(eventName, eventData);
+    } catch (error) {
+      // Silently fail
+    }
   }
 
-  try {
-    await mixpanel.track(eventName, properties || {});
-    console.log(`Event tracked: ${eventName}`, properties);
-  } catch (error) {
-    console.error(`Failed to track event ${eventName}:`, error);
-  }
+  // Always log for development
+  console.log(`📊 [Analytics] ${eventName}`, eventData);
 };
 
-export const trackTaskCreated = async (taskId: string, priority: string) => {
-  await trackEvent('task_created', {
-    task_id: taskId,
-    priority,
-    timestamp: new Date().toISOString(),
-  });
+export const trackTaskCreated = (taskId: string, priority: string) => {
+  trackEvent('task_created', { task_id: taskId, priority });
 };
 
-export const trackTaskCompleted = async (taskId: string) => {
-  await trackEvent('task_completed', {
-    task_id: taskId,
-    timestamp: new Date().toISOString(),
-  });
+export const trackTaskCompleted = (taskId: string) => {
+  trackEvent('task_completed', { task_id: taskId });
 };
 
-export const trackPhotoAttached = async (taskId: string, photoCount: number) => {
-  await trackEvent('photo_attached', {
-    task_id: taskId,
-    photo_count: photoCount,
-    timestamp: new Date().toISOString(),
-  });
+export const trackPhotoAttached = (taskId: string, photoCount: number) => {
+  trackEvent('photo_attached', { task_id: taskId, photo_count: photoCount });
 };
 
-export const trackLocationAdded = async (taskId: string, latitude: number, longitude: number) => {
-  await trackEvent('location_added', {
-    task_id: taskId,
-    latitude,
-    longitude,
-    timestamp: new Date().toISOString(),
-  });
+export const trackLocationAdded = (taskId: string, latitude: number, longitude: number) => {
+  trackEvent('location_added', { task_id: taskId, latitude, longitude });
 };
 
-export const trackMapViewed = async (taskCount: number) => {
-  await trackEvent('map_viewed', {
-    task_count: taskCount,
-    timestamp: new Date().toISOString(),
-  });
+export const trackMapViewed = (taskCount: number) => {
+  trackEvent('map_viewed', { task_count: taskCount });
 };
 
-export const trackProfileViewed = async (totalTasks: number, completedTasks: number) => {
-  await trackEvent('profile_viewed', {
+export const trackProfileViewed = (totalTasks: number, completedTasks: number) => {
+  trackEvent('profile_viewed', {
     total_tasks: totalTasks,
     completed_tasks: completedTasks,
     completion_rate: totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(2) : 0,
-    timestamp: new Date().toISOString(),
   });
 };

@@ -70,7 +70,7 @@ export default function TaskDetailScreen() {
     const photoUri = await takePhotoWithCamera();
     if (photoUri) {
       addPhotoToTask(taskId, photoUri);
-      await trackPhotoAttached(taskId, (task?.photos.length || 0) + 1);
+      trackPhotoAttached(taskId, (task?.photos.length || 0) + 1);
     }
     setShowPhotoModal(false);
   };
@@ -79,7 +79,7 @@ export default function TaskDetailScreen() {
     const photoUri = await pickImageFromGallery();
     if (photoUri) {
       addPhotoToTask(taskId, photoUri);
-      await trackPhotoAttached(taskId, (task?.photos.length || 0) + 1);
+      trackPhotoAttached(taskId, (task?.photos.length || 0) + 1);
     }
     setShowPhotoModal(false);
   };
@@ -96,7 +96,7 @@ export default function TaskDetailScreen() {
           longitudeDelta: 0.05,
           address: location.address,
         });
-        await trackLocationAdded(taskId, location.latitude, location.longitude);
+        trackLocationAdded(taskId, location.latitude, location.longitude);
         Alert.alert('Success', `Location added: ${location.address}`);
       } else {
         Alert.alert('Error', 'Could not get location. Please enable location services.');

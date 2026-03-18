@@ -11,7 +11,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { hasHydrated, usedFallback } = useAppHydration();
   const { isAuthenticated, userName, tasks, logout } = useAppStore();
-  const [trackingInProgress, setTrackingInProgress] = useState(false);
 
   const doneCount = tasks.filter((task) => task.completed).length;
   const openCount = tasks.length - doneCount;
@@ -22,11 +21,7 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      (async () => {
-        setTrackingInProgress(true);
-        await trackProfileViewed(tasks.length, doneCount);
-        setTrackingInProgress(false);
-      })();
+      trackProfileViewed(tasks.length, doneCount);
     }, [tasks.length, doneCount])
   );
 
@@ -142,14 +137,6 @@ export default function ProfileScreen() {
             {doneCount} of {tasks.length} tasks completed
           </Text>
         </View>
-
-        {/* Analytics Status */}
-        {trackingInProgress && (
-          <View style={styles.trackingStatus}>
-            <ActivityIndicator size="small" color="#0f766e" />
-            <Text style={styles.trackingText}>Analytics syncing...</Text>
-          </View>
-        )}
 
         <Pressable style={styles.logoutButton} onPress={handleLogout}>
           <MaterialCommunityIcons name="logout" size={20} color="#dc2626" />
