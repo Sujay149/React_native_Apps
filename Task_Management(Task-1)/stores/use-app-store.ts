@@ -28,6 +28,22 @@ export type Task = {
   updatedAt: string;
 };
 
+const normalizeTask = (task: Partial<Task>): Task => {
+  const createdAt = task.createdAt ?? nowIso();
+  return {
+    id: task.id ?? createTaskId(),
+    title: task.title ?? '',
+    description: task.description ?? '',
+    status: task.status ?? (task.completed ? 'completed' : 'open'),
+    priority: task.priority ?? 'medium',
+    completed: Boolean(task.completed),
+    photos: Array.isArray(task.photos) ? task.photos : [],
+    location: task.location,
+    createdAt,
+    updatedAt: task.updatedAt ?? createdAt,
+  };
+};
+
 type AppState = {
   isAuthenticated: boolean;
   userName: string;
@@ -125,10 +141,10 @@ export const useAppStore = create<AppState>()(
       addPhotoToTask: (taskId, photoUri) =>
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === taskId && task.photos.length < 3
+            task.id === taskId && (task.photos?.length ?? 0) < 3
               ? {
                   ...task,
-                  photos: [...task.photos, photoUri],
+                  photos: [...(Array.isArray(task.photos) ? task.photos : []), photoUri],
                   updatedAt: nowIso(),
                 }
               : task,
@@ -141,7 +157,9 @@ export const useAppStore = create<AppState>()(
             task.id === taskId
               ? {
                   ...task,
-                  photos: task.photos.filter((_, idx) => idx !== photoIndex),
+                  photos: (Array.isArray(task.photos) ? task.photos : []).filter(
+                    (_, idx) => idx !== photoIndex,
+                  ),
                   updatedAt: nowIso(),
                 }
               : task,
@@ -166,6 +184,20 @@ export const useAppStore = create<AppState>()(
     {
       name: 'tasktrack-app-state',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        ...state,
+        tasks: state.tasks.map((task) => normalizeTask(task)),
+      }),
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState as Partial<AppState>) || {};
+        return {
+          ...currentState,
+          ...persisted,
+          tasks: Array.isArray(persisted.tasks)
+            ? persisted.tasks.map((task) => normalizeTask(task as Partial<Task>))
+            : currentState.tasks,
+        };
+      },
     },
   ),
 );

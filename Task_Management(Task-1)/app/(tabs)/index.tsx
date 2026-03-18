@@ -17,7 +17,7 @@ import {
 import { useAppHydration, useAppStore, TaskPriority, TaskStatus } from '@/stores/use-app-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { trackTaskCreated } from '@/utils/analytics';
+import { trackTaskCompleted, trackTaskCreated } from '@/utils/analytics';
 
 type FilterOption = 'all' | 'open' | 'done';
 
@@ -73,6 +73,13 @@ export default function TaskListScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 500);
+  };
+
+  const handleToggleTask = (taskId: string, wasCompleted: boolean) => {
+    toggleTask(taskId);
+    if (!wasCompleted) {
+      trackTaskCompleted(taskId);
+    }
   };
 
   if (!hasHydrated && Platform.OS !== 'web') {
@@ -192,7 +199,7 @@ export default function TaskListScreen() {
                   </View>
                 )}
                 <Pressable
-                  onPress={() => toggleTask(item.id)}
+                  onPress={() => handleToggleTask(item.id, item.completed)}
                   style={styles.completeButton}>
                   <MaterialCommunityIcons
                     name={item.completed ? 'check-circle' : 'checkbox-blank-circle-outline'}

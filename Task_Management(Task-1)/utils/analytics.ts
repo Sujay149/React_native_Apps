@@ -1,13 +1,97 @@
-// Analytics helper - uses console logging for development
-// Mixpanel integration removed for Expo Go compatibility
+import Constants from 'expo-constants';
 
-export const initializeMixpanel = async () => {
-  console.log('📊 Analytics logging initialized');
+const MIXPANEL_TOKEN = 'fc1d8ea18b7cc8f3b1e7f4d9a2c5b6e9';
+const MAX_DEBUG_EVENTS = 100;
+
+type EventProps = Record<string, unknown>;
+export type AnalyticsDebugEvent = {
+  id: string;
+  eventName: string;
+  properties: EventProps;
+  createdAt: string;
 };
 
-export const trackEvent = async (eventName: string, properties?: Record<string, any>) => {
+type MixpanelClient = {
+  init: () => Promise<void>;
+  track: (eventName: string, properties?: EventProps) => void | Promise<void>;
+};
+
+let mixpanel: MixpanelClient | null = null;
+let initialized = false;
+let debugEvents: AnalyticsDebugEvent[] = [];
+const debugListeners = new Set<(events: AnalyticsDebugEvent[]) => void>();
+
+const isExpoGo = () => Constants.appOwnership === 'expo';
+const notifyDebugListeners = () => {
+  const snapshot = [...debugEvents];
+  debugListeners.forEach((listener) => listener(snapshot));
+};
+
+const addDebugEvent = (eventName: string, properties: EventProps) => {
+  const createdAt = new Date().toISOString();
+  const event: AnalyticsDebugEvent = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    eventName,
+    properties,
+    createdAt,
+  };
+
+  debugEvents = [event, ...debugEvents].slice(0, MAX_DEBUG_EVENTS);
+  notifyDebugListeners();
+};
+
+export const getAnalyticsDebugEvents = () => [...debugEvents];
+
+export const subscribeAnalyticsDebugEvents = (
+  listener: (events: AnalyticsDebugEvent[]) => void,
+) => {
+  debugListeners.add(listener);
+  listener([...debugEvents]);
+
+  return () => {
+    debugListeners.delete(listener);
+  };
+};
+
+export const clearAnalyticsDebugEvents = () => {
+  debugEvents = [];
+  notifyDebugListeners();
+};
+
+export const initializeMixpanel = async () => {
+  if (initialized) return;
+  initialized = true;
+
+  if (isExpoGo()) {
+    console.log('[Analytics] Expo Go detected, using console logging only.');
+    return;
+  }
+
+  try {
+    const { Mixpanel } = await import('mixpanel-react-native');
+    const client = new Mixpanel(MIXPANEL_TOKEN, false) as MixpanelClient;
+    await client.init();
+    mixpanel = client;
+    console.log('[Analytics] Mixpanel initialized.');
+  } catch (error) {
+    console.log('[Analytics] Mixpanel unavailable, using console logging only.', error);
+    mixpanel = null;
+  }
+};
+
+export const trackEvent = async (eventName: string, properties?: EventProps) => {
   const eventData = { ...properties, timestamp: new Date().toISOString() };
-  console.log(`📊 [Analytics] ${eventName}`, eventData);
+  addDebugEvent(eventName, eventData);
+
+  if (mixpanel) {
+    try {
+      await mixpanel.track(eventName, eventData);
+    } catch (error) {
+      console.log('[Analytics] Track failed, event kept in console only.', error);
+    }
+  }
+
+  console.log(`[Analytics] ${eventName}`, eventData);
 };
 
 export const trackTaskCreated = (taskId: string, priority: string) => {

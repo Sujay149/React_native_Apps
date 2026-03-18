@@ -63,7 +63,8 @@ export const reverseGeocode = async (latitude: number, longitude: number): Promi
 
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   } catch (error) {
-    console.error('Error reverse geocoding:', error);
+    // Geocoder may be unavailable on some networks/devices; fall back to coordinates.
+    console.log('Reverse geocoding unavailable, using coordinates instead.');
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   }
 };
