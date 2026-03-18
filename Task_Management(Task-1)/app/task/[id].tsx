@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -46,6 +45,9 @@ export default function TaskDetailScreen() {
   const [status, setStatus] = useState<TaskStatus>('open');
   const [error, setError] = useState('');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewLoadError, setPreviewLoadError] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
   useEffect(() => {
@@ -143,9 +145,9 @@ export default function TaskDetailScreen() {
 
   if (!hasHydrated && Platform.OS !== 'web') {
     return (
-      <View style={styles.centered}>
+      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
         <ActivityIndicator size="large" color="#0f766e" />
-        <Text style={styles.helperText}>Loading task...</Text>
+        <Text className="text-base text-[#64748b]">Loading task...</Text>
       </View>
     );
   }
@@ -156,9 +158,9 @@ export default function TaskDetailScreen() {
 
   if (!task) {
     return (
-      <View style={styles.centered}>
+      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
         <MaterialCommunityIcons name="alert-circle" size={48} color="#cbd5e1" />
-        <Text style={styles.helperText}>Task not found.</Text>
+        <Text className="text-base text-[#64748b]">Task not found.</Text>
       </View>
     );
   }
@@ -168,27 +170,27 @@ export default function TaskDetailScreen() {
       <Stack.Screen options={{ title: 'Task Detail' }} />
       <KeyboardAvoidingView
         behavior={Platform.select({ ios: 'padding', android: undefined })}
-        style={styles.container}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <Text style={styles.heading}>Edit Task</Text>
+        className="flex-1 bg-[#f8fafc]">
+        <SafeAreaView className="flex-1">
+          <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} keyboardShouldPersistTaps="handled">
+            <Text className="text-2xl font-bold text-[#0f172a]">Edit Task</Text>
             <TextInput
               value={title}
               onChangeText={(value) => {
                 setTitle(value);
                 if (error) setError('');
               }}
-              style={[styles.input, error ? styles.inputError : null]}
+              className={`rounded-[10px] border bg-white px-3 py-2.5 text-base text-[#0f172a] ${error ? 'border-[#dc2626]' : 'border-[#cbd5e1]'}`}
               placeholder="Task title"
               placeholderTextColor="#cbd5e1"
             />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <Text className="-mt-2.5 text-xs text-[#dc2626]">{error}</Text> : null}
 
-            <Text style={styles.label}>Description</Text>
+            <Text className="text-sm font-semibold text-[#0f172a]">Description</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              style={[styles.input, styles.multiline]}
+              className="min-h-[100px] rounded-[10px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-base text-[#0f172a]"
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -196,37 +198,37 @@ export default function TaskDetailScreen() {
               placeholderTextColor="#cbd5e1"
             />
 
-            <Text style={styles.label}>Priority</Text>
-            <View style={styles.priorityContainer}>
+            <Text className="text-sm font-semibold text-[#0f172a]">Priority</Text>
+            <View className="flex-row gap-2">
               {(['low', 'medium', 'high'] as TaskPriority[]).map((p) => (
                 <Pressable
                   key={p}
                   onPress={() => setPriority(p)}
-                  style={[styles.priorityBtn, priority === p && styles.priorityBtnActive]}>
-                  <Text style={styles.priorityBtnText}>{p}</Text>
+                  className={`flex-1 items-center rounded-lg border px-2 py-2.5 ${priority === p ? 'border-[#0f766e] bg-[#0f766e]' : 'border-[#cbd5e1] bg-white'}`}>
+                  <Text className={`text-sm font-semibold ${priority === p ? 'text-white' : 'text-[#334155]'}`}>{p}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.statusContainer}>
+            <Text className="text-sm font-semibold text-[#0f172a]">Status</Text>
+            <View className="flex-row gap-2">
               {(['open', 'in-progress', 'completed'] as TaskStatus[]).map((s) => (
                 <Pressable
                   key={s}
                   onPress={() => setStatus(s)}
-                  style={[styles.statusBtn, status === s && styles.statusBtnActive]}>
-                  <Text style={styles.statusBtnText}>{s}</Text>
+                  className={`flex-1 items-center rounded-lg border px-2 py-2.5 ${status === s ? 'border-[#0f766e] bg-[#0f766e]' : 'border-[#cbd5e1] bg-white'}`}>
+                  <Text className={`text-xs font-semibold ${status === s ? 'text-white' : 'text-[#334155]'}`}>{s}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.label}>Photos ({(task?.photos?.length || 0)}/3)</Text>
+            <View className="gap-[10px]">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm font-semibold text-[#0f172a]">Photos ({(task?.photos?.length || 0)}/3)</Text>
                 <Pressable
                   onPress={() => setShowPhotoModal(true)}
                   disabled={(task?.photos?.length || 0) >= 3}
-                  style={styles.addPhotoBtn}>
+                  className="h-9 w-9 items-center justify-center rounded-full bg-[#e0f2fe]">
                   <MaterialCommunityIcons name="plus" size={20} color="#0f766e" />
                 </Pressable>
               </View>
@@ -236,11 +238,19 @@ export default function TaskDetailScreen() {
                   data={task.photos}
                   keyExtractor={(_, idx) => idx.toString()}
                   renderItem={({ item, index }) => (
-                    <View style={styles.photoContainer}>
-                      <Image source={{ uri: item }} style={styles.photoImage} />
+                    <View className="relative mr-[10px]" style={{ width: 100, height: 105 }}>
+                      <Pressable
+                        onPress={() => {
+                          setPreviewLoadError(false);
+                          setIsPreviewLoading(true);
+                          setPreviewPhotoUri(item);
+                        }}
+                        style={{ width: 100, height: 105 }}>
+                        <Image source={{ uri: item }} style={{ width: 100, height: 105, borderRadius: 8 }} />
+                      </Pressable>
                       <Pressable
                         onPress={() => handleRemovePhoto(index)}
-                        style={styles.removePhotoBtn}>
+                        className="absolute -right-2 -top-[5px] h-7 w-7 items-center justify-center rounded-full bg-[#dc2626]">
                         <MaterialCommunityIcons name="close" size={18} color="#fff" />
                       </Pressable>
                     </View>
@@ -248,18 +258,19 @@ export default function TaskDetailScreen() {
                   horizontal
                   scrollEnabled
                   showsHorizontalScrollIndicator={false}
-                  style={{ marginVertical: 8 }}
+                  contentContainerStyle={{ paddingTop: 5, paddingBottom: 5 }}
+                  style={{ marginVertical: 8, minHeight: 115 }}
                 />
               )}
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.label}>Location</Text>
+            <View className="gap-[10px]">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm font-semibold text-[#0f172a]">Location</Text>
                 <Pressable
                   onPress={handleAddLocation}
                   disabled={loadingLocation}
-                  style={styles.addLocationBtn}>
+                  className="h-9 w-9 items-center justify-center rounded-full bg-[#e0f2fe]">
                   {loadingLocation ? (
                     <ActivityIndicator color="#0f766e" size={20} />
                   ) : (
@@ -269,31 +280,31 @@ export default function TaskDetailScreen() {
               </View>
 
               {task.location && (
-                <View style={styles.locationInfo}>
+                <View className="flex-row items-start gap-[10px] rounded-lg bg-[#ecf0f1] p-3">
                   <MaterialCommunityIcons name="map-marker" size={18} color="#0f766e" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.locationAddress}>{task.location.address}</Text>
-                    <Text style={styles.locationCoords}>
-                      {task.location.latitude.toFixed(4)}, {task.location.longitude.toFixed(4)}
+                  <View className="flex-1">
+                    <Text className="text-sm font-medium text-[#0f172a]">{task.location.address}</Text>
+                    <Text className="mt-0.5 text-xs text-[#64748b]">
+                      Lat: {task.location.latitude.toFixed(6)}, Lng: {task.location.longitude.toFixed(6)}
                     </Text>
                   </View>
                 </View>
               )}
             </View>
 
-            <View style={styles.metaContainer}>
-              <Text style={styles.metaText}>Created: {new Date(task.createdAt).toLocaleString()}</Text>
-              <Text style={styles.metaText}>Updated: {new Date(task.updatedAt).toLocaleString()}</Text>
+            <View className="gap-1.5 py-2">
+              <Text className="text-xs text-[#64748b]">Created: {new Date(task.createdAt).toLocaleString()}</Text>
+              <Text className="text-xs text-[#64748b]">Updated: {new Date(task.updatedAt).toLocaleString()}</Text>
             </View>
 
-            <Pressable style={styles.saveButton} onPress={handleSave}>
+            <Pressable className="flex-row items-center justify-center gap-2 rounded-[10px] bg-[#0f766e] py-3.5" onPress={handleSave}>
               <MaterialCommunityIcons name="content-save" size={20} color="#fff" />
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              <Text className="text-base font-semibold text-white">Save Changes</Text>
             </Pressable>
 
-            <Pressable style={styles.deleteButton} onPress={handleDeleteTask}>
+            <Pressable className="flex-row items-center justify-center gap-2 rounded-[10px] bg-[#dc2626] py-3.5" onPress={handleDeleteTask}>
               <MaterialCommunityIcons name="trash-can-outline" size={20} color="#fff" />
-              <Text style={styles.deleteButtonText}>Delete Task</Text>
+              <Text className="text-base font-semibold text-white">Delete Task</Text>
             </Pressable>
           </ScrollView>
         </SafeAreaView>
@@ -304,25 +315,85 @@ export default function TaskDetailScreen() {
         animationType="slide"
         transparent
         onRequestClose={() => setShowPhotoModal(false)}>
-        <SafeAreaView style={styles.photoModalContainer}>
-          <View style={styles.photoModalContent}>
-            <View style={styles.photoModalHeader}>
+        <SafeAreaView className="flex-1 bg-[#f8fafc]">
+          <View className="flex-1 px-4">
+            <View className="flex-row items-center justify-between border-b border-[#e2e8f0] py-[14px]">
               <Pressable onPress={() => setShowPhotoModal(false)}>
-                <Text style={styles.closeText}>Close</Text>
+                <Text className="text-base font-medium text-[#64748b]">Close</Text>
               </Pressable>
-              <Text style={styles.modalTitle}>Add Photo</Text>
-              <View style={{ width: 50 }} />
+              <Text className="text-lg font-bold text-[#0f172a]">Add Photo</Text>
+              <View className="w-[50px]" />
             </View>
 
-            <View style={styles.photoOptionsContainer}>
-              <Pressable style={styles.photoOption} onPress={handleTakePhoto}>
+            <View className="flex-1 flex-row items-start justify-around py-10">
+              <Pressable className="items-center gap-3" onPress={handleTakePhoto}>
                 <MaterialCommunityIcons name="camera" size={40} color="#0f766e" />
-                <Text style={styles.photoOptionText}>Take Photo</Text>
+                <Text className="text-sm font-semibold text-[#0f172a]">Take Photo</Text>
               </Pressable>
-              <Pressable style={styles.photoOption} onPress={handlePickPhoto}>
+              <Pressable className="items-center gap-3" onPress={handlePickPhoto}>
                 <MaterialCommunityIcons name="image" size={40} color="#0f766e" />
-                <Text style={styles.photoOptionText}>From Gallery</Text>
+                <Text className="text-sm font-semibold text-[#0f172a]">From Gallery</Text>
               </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      <Modal
+        visible={Boolean(previewPhotoUri)}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => {
+          setPreviewPhotoUri(null);
+          setIsPreviewLoading(false);
+          setPreviewLoadError(false);
+        }}>
+        <SafeAreaView className="flex-1 bg-black">
+          <View className="flex-1">
+            <View className="flex-row items-center justify-between px-4 py-3">
+              <Pressable
+                onPress={() => {
+                  setPreviewPhotoUri(null);
+                  setIsPreviewLoading(false);
+                  setPreviewLoadError(false);
+                }}
+                className="flex-row items-center gap-1 rounded-full bg-white px-3 py-2">
+                <MaterialCommunityIcons name="arrow-left" size={20} color="#000" />
+                <Text className="text-sm font-semibold text-black">Back</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setPreviewPhotoUri(null);
+                  setIsPreviewLoading(false);
+                  setPreviewLoadError(false);
+                }}
+                className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+              </Pressable>
+            </View>
+            <View className="flex-1 items-center justify-center px-2 pb-6">
+              {isPreviewLoading ? (
+                <ActivityIndicator size="large" color="#ffffff" style={{ position: 'absolute' }} />
+              ) : null}
+              {previewPhotoUri ? (
+                <Image
+                  source={{ uri: previewPhotoUri }}
+                  resizeMode="contain"
+                  style={{ width: '100%', height: '100%' }}
+                  onLoadStart={() => {
+                    setIsPreviewLoading(true);
+                    setPreviewLoadError(false);
+                  }}
+                  onLoadEnd={() => setIsPreviewLoading(false)}
+                  onError={() => {
+                    setIsPreviewLoading(false);
+                    setPreviewLoadError(true);
+                  }}
+                />
+              ) : null}
+              {previewLoadError ? (
+                <Text className="absolute text-sm text-white/80">Unable to preview this image.</Text>
+              ) : null}
             </View>
           </View>
         </SafeAreaView>
@@ -330,48 +401,3 @@ export default function TaskDetailScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  helperText: { color: '#64748b', fontSize: 16 },
-  content: { padding: 16, gap: 14 },
-  heading: { fontSize: 24, fontWeight: '700', color: '#0f172a' },
-  label: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#ffffff', fontSize: 16, color: '#0f172a' },
-  inputError: { borderColor: '#dc2626' },
-  multiline: { minHeight: 100, textAlignVertical: 'top' },
-  errorText: { color: '#dc2626', fontSize: 12, marginTop: -10 },
-  priorityContainer: { flexDirection: 'row', gap: 8 },
-  priorityBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, alignItems: 'center' },
-  priorityBtnActive: { backgroundColor: '#0f766e', borderColor: '#0f766e' },
-  priorityBtnText: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  statusContainer: { flexDirection: 'row', gap: 8 },
-  statusBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, alignItems: 'center' },
-  statusBtnActive: { backgroundColor: '#0f766e', borderColor: '#0f766e' },
-  statusBtnText: { fontSize: 12, fontWeight: '600', color: '#334155' },
-  section: { gap: 10 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  addPhotoBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e0f2fe', justifyContent: 'center', alignItems: 'center' },
-  photoContainer: { position: 'relative', marginRight: 10 },
-  photoImage: { width: 100, height: 100, borderRadius: 8 },
-  removePhotoBtn: { position: 'absolute', top: -8, right: -8, width: 28, height: 28, borderRadius: 14, backgroundColor: '#dc2626', justifyContent: 'center', alignItems: 'center' },
-  addLocationBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e0f2fe', justifyContent: 'center', alignItems: 'center' },
-  locationInfo: { flexDirection: 'row', backgroundColor: '#ecf0f1', borderRadius: 8, padding: 12, gap: 10, alignItems: 'flex-start' },
-  locationAddress: { fontSize: 14, fontWeight: '500', color: '#0f172a' },
-  locationCoords: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  metaContainer: { gap: 6, paddingVertical: 8 },
-  metaText: { fontSize: 12, color: '#64748b' },
-  saveButton: { backgroundColor: '#0f766e', borderRadius: 10, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
-  saveButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
-  deleteButton: { backgroundColor: '#dc2626', borderRadius: 10, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
-  deleteButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
-  photoModalContainer: { flex: 1, backgroundColor: '#f8fafc' },
-  photoModalContent: { flex: 1, paddingHorizontal: 16 },
-  photoModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
-  closeText: { color: '#64748b', fontSize: 16, fontWeight: '500' },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
-  photoOptionsContainer: { flex: 1, paddingVertical: 40, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' },
-  photoOption: { alignItems: 'center', gap: 12 },
-  photoOptionText: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-});

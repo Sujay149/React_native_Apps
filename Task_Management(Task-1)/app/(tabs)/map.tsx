@@ -1,6 +1,6 @@
 import { Redirect, useFocusEffect } from 'expo-router';
 import React, { useCallback } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppHydration, useAppStore } from '@/stores/use-app-store';
@@ -27,6 +27,7 @@ const LEAFLET_HTML = `
   <div id="map"></div>
   <script>
     const map = L.map('map').setView([20, 0], 2);
+    const markerLayer = L.layerGroup().addTo(map);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
@@ -36,7 +37,7 @@ const LEAFLET_HTML = `
       if (!task.location) return;
       
       const { latitude, longitude, address } = task.location;
-      const marker = L.marker([latitude, longitude]).addTo(map);
+      const marker = L.marker([latitude, longitude]).addTo(markerLayer);
       
       const popupContent = \`
         <div class="info">
@@ -53,11 +54,13 @@ const LEAFLET_HTML = `
     };
 
     window.updateMap = function(tasks) {
-      tasks.forEach(task => window.addTaskMarker(task));
-      if (tasks.length > 0) {
-        map.fitBounds(tasks
-          .filter(t => t.location)
-          .map(t => [t.location.latitude, t.location.longitude]));
+      markerLayer.clearLayers();
+      const validTasks = tasks.filter(t => t && t.location && Number.isFinite(t.location.latitude) && Number.isFinite(t.location.longitude));
+      validTasks.forEach(task => window.addTaskMarker(task));
+      if (validTasks.length > 1) {
+        map.fitBounds(validTasks.map(t => [t.location.latitude, t.location.longitude]), { padding: [24, 24] });
+      } else if (validTasks.length === 1) {
+        map.setView([validTasks[0].location.latitude, validTasks[0].location.longitude], 14);
       }
     };
   </script>
@@ -69,6 +72,7 @@ export default function MapScreen() {
   const { hasHydrated } = useAppHydration();
   const { tasks, isAuthenticated } = useAppStore();
   const webViewRef = React.useRef<WebView>(null);
+  const [isMapReady, setIsMapReady] = React.useState(false);
 
   const tasksWithLocation = tasks.filter((task) => task.location);
 
@@ -80,18 +84,21 @@ export default function MapScreen() {
     }, [tasksWithLocation])
   );
 
+  const injectTasksIntoMap = React.useCallback(() => {
+    if (!webViewRef.current || !isMapReady) return;
+    const js = `window.updateMap && window.updateMap(${JSON.stringify(tasksWithLocation)}); true;`;
+    webViewRef.current.injectJavaScript(js);
+  }, [isMapReady, tasksWithLocation]);
+
   React.useEffect(() => {
-    if (webViewRef.current && tasksWithLocation.length > 0) {
-      const js = `window.updateMap(${JSON.stringify(tasksWithLocation)});`;
-      webViewRef.current.injectJavaScript(js);
-    }
-  }, [tasksWithLocation]);
+    injectTasksIntoMap();
+  }, [injectTasksIntoMap]);
 
   if (!hasHydrated) {
     return (
-      <View style={styles.loadingContainer}>
+      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
         <ActivityIndicator size="large" color="#0f766e" />
-        <Text style={styles.loadingText}>Loading map...</Text>
+        <Text className="mt-3 text-sm text-[#64748b]">Loading map...</Text>
       </View>
     );
   }
@@ -101,18 +108,18 @@ export default function MapScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Task Map</Text>
-        <Text style={styles.headerSubtitle}>
+    <SafeAreaView className="flex-1 bg-[#f8fafc]">
+      <View className="border-b border-[#e2e8f0] px-4 py-3">
+        <Text className="text-2xl font-bold text-[#0f172a]">Task Map</Text>
+        <Text className="mt-1 text-sm text-[#64748b]">
           {tasksWithLocation.length} task{tasksWithLocation.length !== 1 ? 's' : ''} with location
         </Text>
       </View>
 
       {tasksWithLocation.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No tasks with locations yet</Text>
-          <Text style={styles.emptySubtext}>
+        <View className="flex-1 items-center justify-center px-4">
+          <Text className="text-center text-base font-semibold text-[#0f172a]">No tasks with locations yet</Text>
+          <Text className="mt-2 text-center text-sm text-[#64748b]">
             Add a location to your tasks to see them on the map
           </Text>
         </View>
@@ -120,10 +127,11 @@ export default function MapScreen() {
         <WebView
           ref={webViewRef}
           source={{ html: LEAFLET_HTML }}
-          style={styles.webview}
+          style={{ flex: 1 }}
+          onLoadEnd={() => setIsMapReady(true)}
           startInLoadingState
           renderLoading={() => (
-            <View style={styles.webviewLoading}>
+            <View className="flex-1 items-center justify-center bg-[#f8fafc]">
               <ActivityIndicator size="large" color="#0f766e" />
             </View>
           )}
@@ -134,64 +142,3 @@ export default function MapScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  webview: {
-    flex: 1,
-  },
-  webviewLoading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0f172a',
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-});

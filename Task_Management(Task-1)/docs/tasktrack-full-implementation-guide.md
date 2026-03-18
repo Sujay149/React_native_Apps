@@ -215,7 +215,7 @@ This ensures location feature remains functional even when geocoding APIs are te
 - task_created
 - task_completed
 - photo_attached
-- location_added
+- location_addedx
 - map_viewed
 - profile_viewed
 

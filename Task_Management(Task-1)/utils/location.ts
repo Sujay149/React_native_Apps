@@ -25,7 +25,7 @@ export const getCurrentLocation = async (): Promise<LocationCoordinates | null> 
     }
 
     const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
+      accuracy: Location.Accuracy.Highest,
     });
 
     const coords = {
@@ -55,14 +55,23 @@ export const reverseGeocode = async (latitude: number, longitude: number): Promi
 
     if (results.length > 0) {
       const address = results[0];
-      const addressString = [address.street, address.city, address.region, address.country]
+      const addressString = [
+        address.name,
+        address.streetNumber,
+        address.street,
+        address.district,
+        address.city,
+        address.region,
+        address.postalCode,
+        address.country,
+      ]
         .filter(Boolean)
         .join(', ');
       return addressString || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     }
 
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-  } catch (error) {
+  } catch {
     // Geocoder may be unavailable on some networks/devices; fall back to coordinates.
     console.log('Reverse geocoding unavailable, using coordinates instead.');
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;

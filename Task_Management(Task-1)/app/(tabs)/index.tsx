@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -40,16 +39,31 @@ export default function TaskListScreen() {
   const [titleError, setTitleError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredTasks = useMemo(() => {
-    if (filter === 'open') {
-      return tasks.filter((task) => !task.completed);
+    const query = searchQuery.trim().toLowerCase();
+
+    const statusFiltered = (() => {
+      if (filter === 'open') {
+        return tasks.filter((task) => !task.completed);
+      }
+      if (filter === 'done') {
+        return tasks.filter((task) => task.completed);
+      }
+      return tasks;
+    })();
+
+    if (!query) {
+      return statusFiltered;
     }
-    if (filter === 'done') {
-      return tasks.filter((task) => task.completed);
-    }
-    return tasks;
-  }, [tasks, filter]);
+
+    return statusFiltered.filter((task) => {
+      const title = task.title?.toLowerCase() ?? '';
+      const description = task.description?.toLowerCase() ?? '';
+      return title.includes(query) || description.includes(query);
+    });
+  }, [tasks, filter, searchQuery]);
 
   const handleCreateTask = async () => {
     const trimmedTitle = title.trim();
@@ -84,8 +98,8 @@ export default function TaskListScreen() {
 
   if (!hasHydrated && Platform.OS !== 'web') {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.loadingText}>Loading tasks...</Text>
+      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
+        <Text className="text-base text-[#334155]">Loading tasks...</Text>
       </View>
     );
   }
@@ -99,8 +113,8 @@ export default function TaskListScreen() {
     return (
       <Pressable
         onPress={() => setFilter(value)}
-        style={[styles.filterButton, isActive && styles.filterButtonActive]}>
-        <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+        className={`rounded-full border px-[14px] py-2 ${isActive ? 'border-[#0f766e] bg-[#0f766e]' : 'border-[#cbd5e1] bg-[#ffff]'}`}>
+        <Text className={`text-sm font-medium ${isActive ? 'text-white' : 'text-[#334155]'}`}>
           {label}
         </Text>
       </Pressable>
@@ -132,75 +146,94 @@ export default function TaskListScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-[#f8fafc]">
       <KeyboardAvoidingView
         behavior={Platform.select({ ios: 'padding', android: undefined })}
-        style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>My Tasks</Text>
-          <Pressable style={styles.addButton} onPress={() => setShowCreateModal(true)}>
+        className="flex-1 bg-[#f8fafc]">
+        <View className="flex-row items-center justify-between px-4 pb-2 pt-3">
+          <Text className="text-[28px] font-bold text-[#0f172a]">My Tasks</Text>
+          <Pressable className="h-12 w-12 items-center justify-center rounded-full bg-[#0f766e]" onPress={() => setShowCreateModal(true)}>
             <MaterialCommunityIcons name="plus" size={24} color="#fff" />
           </Pressable>
         </View>
 
-        <View style={styles.filterContainer}>
+        <View className="flex-row gap-2 px-4 py-[10px]">
           {renderFilter('all', 'All')}
           {renderFilter('open', 'Open')}
           {renderFilter('done', 'Done')}
         </View>
 
+        <View className="px-4 pb-2">
+          <View className="flex-row items-center rounded-xl border border-[#cbd5e1] bg-white px-3">
+            <MaterialCommunityIcons name="magnify" size={20} color="#64748b" />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search tasks"
+              placeholderTextColor="#94a3b8"
+              className="ml-2 flex-1 py-2.5 text-sm text-[#0f172a]"
+              returnKeyType="search"
+            />
+            {searchQuery ? (
+              <Pressable onPress={() => setSearchQuery('')} className="pl-2">
+                <MaterialCommunityIcons name="close-circle" size={18} color="#94a3b8" />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
         <FlatList
           data={filteredTasks}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ padding: 12, gap: 10 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => router.push(`/task/${item.id}`)}
-              style={[styles.taskCard, item.completed && styles.taskCardCompleted]}>
-              <View style={styles.taskHeader}>
-                <View style={styles.taskTitleContainer}>
+              onPress={() => router.push(`/(tabs)/task/${item.id}`)}
+              className={`gap-[10px] rounded-xl border border-[#e2e8f0] bg-white p-[14px] ${item.completed ? 'opacity-70' : ''}`}>
+              <View className="flex-row items-center justify-between gap-[10px]">
+                <View className="flex-1 flex-row items-center">
                   <MaterialCommunityIcons
                     name={getStatusIcon(item.status)}
                     size={20}
                     color={item.completed ? '#10b981' : '#6b7280'}
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={[styles.taskTitle, item.completed && styles.taskTitleCompleted]}>
+                  <Text className={`flex-1 text-base font-semibold ${item.completed ? 'text-[#94a3b8] line-through' : 'text-[#0f172a]'}`}>
                     {item.title}
                   </Text>
                 </View>
                 <View
+                  className="rounded-md px-[10px] py-1"
                   style={[
-                    styles.priorityBadge,
                     { backgroundColor: getPriorityColor(item.priority) },
                   ]}>
-                  <Text style={styles.priorityText}>{item.priority}</Text>
+                  <Text className="text-xs font-semibold text-white">{item.priority}</Text>
                 </View>
               </View>
 
               {item.description ? (
-                <Text style={styles.taskDescription} numberOfLines={2}>
+                <Text className="text-sm leading-5 text-[#64748b]" numberOfLines={2}>
                   {item.description}
                 </Text>
               ) : null}
 
-              <View style={styles.taskMeta}>
+              <View className="flex-row items-center justify-between gap-2">
                 {item.photos && item.photos.length > 0 && (
-                  <View style={styles.metaItem}>
+                  <View className="flex-row items-center gap-1">
                     <MaterialCommunityIcons name="camera" size={14} color="#6b7280" />
-                    <Text style={styles.metaText}>{item.photos.length}</Text>
+                    <Text className="text-xs text-[#64748b]">{item.photos.length}</Text>
                   </View>
                 )}
                 {item.location && (
-                  <View style={styles.metaItem}>
+                  <View className="flex-row items-center gap-1">
                     <MaterialCommunityIcons name="map-marker" size={14} color="#6b7280" />
-                    <Text style={styles.metaText}>Located</Text>
+                    <Text className="text-xs text-[#64748b]">Located</Text>
                   </View>
                 )}
                 <Pressable
                   onPress={() => handleToggleTask(item.id, item.completed)}
-                  style={styles.completeButton}>
+                  className="ml-auto">
                   <MaterialCommunityIcons
                     name={item.completed ? 'check-circle' : 'checkbox-blank-circle-outline'}
                     size={18}
@@ -211,9 +244,13 @@ export default function TaskListScreen() {
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
+            <View className="flex-1 items-center justify-center py-10">
               <MaterialCommunityIcons name="clipboard-text-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>No tasks yet. Create one to get started!</Text>
+              <Text className="mt-3 text-sm text-[#94a3b8]">
+                {searchQuery.trim()
+                  ? 'No tasks match your search.'
+                  : 'No tasks yet. Create one to get started!'}
+              </Text>
             </View>
           }
         />
@@ -223,54 +260,51 @@ export default function TaskListScreen() {
           animationType="slide"
           transparent={true}
           onRequestClose={() => setShowCreateModal(false)}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
+          <SafeAreaView className="flex-1 bg-[#f8fafc]">
+            <View className="flex-1">
+              <View className="flex-row items-center justify-between border-b border-[#e2e8f0] px-4 py-[14px]">
                 <Pressable onPress={() => setShowCreateModal(false)}>
-                  <Text style={styles.modalCloseText}>Cancel</Text>
+                  <Text className="text-base font-medium text-[#64748b]">Cancel</Text>
                 </Pressable>
-                <Text style={styles.modalTitle}>New Task</Text>
+                <Text className="text-lg font-bold text-[#0f172a]">New Task</Text>
                 <Pressable onPress={handleCreateTask}>
-                  <Text style={styles.modalSaveText}>Save</Text>
+                  <Text className="text-base font-semibold text-[#0f766e]">Save</Text>
                 </Pressable>
               </View>
 
-              <ScrollView style={styles.modalFormContainer}>
-                <Text style={styles.formLabel}>Title *</Text>
+              <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
+                <Text className="mb-1 text-sm font-semibold text-[#0f172a]">Title *</Text>
                 <TextInput
                   value={title}
                   onChangeText={(value) => {
                     setTitle(value);
                     if (titleError) setTitleError('');
                   }}
-                  style={styles.input}
+                  className="rounded-[10px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-base text-[#0f172a]"
                   placeholder="Task title"
                   placeholderTextColor="#cbd5e1"
                 />
-                {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+                {titleError ? <Text className="-mt-2.5 text-xs text-[#dc2626]">{titleError}</Text> : null}
 
-                <Text style={styles.formLabel}>Description</Text>
+                <Text className="mb-1 text-sm font-semibold text-[#0f172a]">Description</Text>
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  style={[styles.input, styles.inputMultiline]}
+                  className="min-h-[100px] rounded-[10px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-base text-[#0f172a]"
                   placeholder="Add details..."
                   placeholderTextColor="#cbd5e1"
                   multiline
                   numberOfLines={4}
                 />
 
-                <Text style={styles.formLabel}>Priority</Text>
-                <View style={styles.priorityContainer}>
+                <Text className="mb-1 text-sm font-semibold text-[#0f172a]">Priority</Text>
+                <View className="flex-row gap-[10px]">
                   {(['low', 'medium', 'high'] as TaskPriority[]).map((p) => (
                     <Pressable
                       key={p}
                       onPress={() => setPriority(p)}
-                      style={[
-                        styles.priorityOption,
-                        priority === p && styles.priorityOptionSelected,
-                      ]}>
-                      <Text style={styles.priorityOptionText}>{p}</Text>
+                      className={`flex-1 items-center rounded-lg border py-2.5 ${priority === p ? 'border-[#0f766e] bg-[#0f766e]' : 'border-[#cbd5e1] bg-white'}`}>
+                      <Text className={`text-sm font-semibold ${priority === p ? 'text-white' : 'text-[#334155]'}`}>{p}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -282,235 +316,4 @@ export default function TaskListScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#334155',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  addButton: {
-    backgroundColor: '#0f766e',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  filterButton: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#ffff',
-  },
-  filterButtonActive: {
-    backgroundColor: '#0f766e',
-    borderColor: '#0f766e',
-  },
-  filterButtonText: {
-    color: '#334155',
-    fontWeight: '500',
-    fontSize: 14,
-  },
-  filterButtonTextActive: {
-    color: '#ffffff',
-  },
-  listContent: {
-    padding: 12,
-    gap: 10,
-  },
-  taskCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
-    gap: 10,
-  },
-  taskCardCompleted: {
-    opacity: 0.7,
-  },
-  taskHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  taskTitleContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  taskTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0f172a',
-    flex: 1,
-  },
-  taskTitleCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#94a3b8',
-  },
-  taskDescription: {
-    color: '#64748b',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  priorityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  priorityText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  taskMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaText: {
-    color: '#64748b',
-    fontSize: 12,
-  },
-  completeButton: {
-    marginLeft: 'auto',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    color: '#94a3b8',
-    fontSize: 14,
-    marginTop: 12,
-  },
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  modalContent: {
-    flex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  modalCloseText: {
-    color: '#64748b',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  modalSaveText: {
-    color: '#0f766e',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  modalFormContainer: {
-    flex: 1,
-    padding: 16,
-    gap: 14,
-  },
-  formLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-    fontSize: 16,
-    color: '#0f172a',
-  },
-  inputMultiline: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 12,
-    marginTop: -10,
-  },
-  priorityContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  priorityOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  priorityOptionSelected: {
-    backgroundColor: '#0f766e',
-    borderColor: '#0f766e',
-  },
-  priorityOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-  },
-});
 

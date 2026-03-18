@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -62,9 +61,9 @@ export default function LoginScreen() {
 
   if (!hasHydrated && Platform.OS !== 'web') {
     return (
-      <View style={styles.centered}>
-        <View style={styles.loadingDot} />
-        <Text style={styles.loadingText}>Loading…</Text>
+      <View className="flex-1 items-center justify-center gap-[10px] bg-[#eef4f0]">
+        <View className="h-2 w-2 rounded-full bg-[#1a9e7a]" />
+        <Text className="text-sm font-semibold text-[#6b8f85]">Loading...</Text>
       </View>
     );
   }
@@ -74,49 +73,51 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
-      style={styles.container}>
+      className="flex-1 justify-center bg-[#eef4f0] px-6 py-8">
 
       {/* Decorative circles */}
-      <View style={[styles.deco, styles.decoLarge]} pointerEvents="none" />
-      <View style={[styles.deco, styles.decoSmall]} pointerEvents="none" />
+      <View
+        className="absolute -right-[50px] -top-[50px] h-[160px] w-[160px] rounded-full border-[1.5px] border-[rgba(26,158,122,0.12)] bg-[rgba(26,158,122,0.07)]"
+        pointerEvents="none"
+      />
+      <View
+        className="absolute right-7 top-7 h-[90px] w-[90px] rounded-full border-[1.5px] border-[rgba(26,158,122,0.09)] bg-[rgba(26,158,122,0.04)]"
+        pointerEvents="none"
+      />
 
-      <Animated.View style={[styles.inner, { transform: [{ translateX: shakeAnim }] }]}>
+      <Animated.View className="gap-0" style={{ transform: [{ translateX: shakeAnim }] }}>
 
         {/* Brand */}
-        <View style={styles.brandRow}>
-          <View style={styles.brandMark}>
-            <View style={styles.brandDiamond} />
+        <View className="mb-7 flex-row items-center gap-[10px]">
+          <View className="h-9 w-9 items-center justify-center rounded-[10px] bg-[#1a9e7a]">
+            <View className="h-[14px] w-[14px] rounded-[3px] bg-white" style={{ transform: [{ rotate: '45deg' }] }} />
           </View>
-          <Text style={styles.brandName}>TaskTrack</Text>
+          <Text className="text-[18px] font-extrabold tracking-[-0.3px] text-[#1a2e2b]">TaskTrack</Text>
         </View>
 
         {/* Hero */}
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Welcome back 👋</Text>
-          <Text style={styles.heroSub}>Sign in to manage your tasks</Text>
+        <View className="mb-6">
+          <Text className="text-[28px] font-extrabold leading-[34px] tracking-[-0.5px] text-[#1a2e2b]">Welcome back 👋</Text>
+          <Text className="mt-[5px] text-sm font-semibold text-[#6b8f85]">Sign in to manage your tasks</Text>
         </View>
 
         {/* Storage warning */}
         {Platform.OS === 'web' && usedFallback ? (
-          <View style={styles.warnBox}>
-            <Text style={styles.warnIcon}>⚠</Text>
-            <Text style={styles.warnText}>
+          <View className="mb-[14px] flex-row items-start gap-2 rounded-xl border border-[#f9d56e] bg-[#fffbeb] p-[10px]">
+            <Text className="mt-px text-[13px] text-[#b45309]">⚠</Text>
+            <Text className="flex-1 text-xs font-semibold leading-[17px] text-[#92400e]">
               Storage unavailable — data may not persist in this session.
             </Text>
           </View>
         ) : null}
 
         {/* Name field */}
-        <View style={styles.field}>
-          <Text style={[styles.label, nameFocused && styles.labelFocused]}>NAME</Text>
+        <View className="mb-[14px]">
+          <Text className={`mb-[5px] text-[11px] font-bold tracking-[0.8px] ${nameFocused ? 'text-[#1a9e7a]' : 'text-[#6b8f85]'}`}>NAME</Text>
           <TextInput
             value={name}
             onChangeText={(v) => { setName(v); if (error) setError(''); }}
-            style={[
-              styles.input,
-              nameFocused && styles.inputFocused,
-              error && !name.trim() && styles.inputError,
-            ]}
+            className={`rounded-xl border-[1.5px] px-[14px] py-[13px] text-[15px] font-semibold text-[#1a2e2b] ${nameFocused ? 'border-[#1a9e7a] bg-[#f7fdfb]' : 'border-[#d4e5de] bg-white'} ${error && !name.trim() ? 'border-[#dc4c3e]' : ''}`}
             placeholder="Your name"
             placeholderTextColor="#b0c9c2"
             autoCapitalize="words"
@@ -127,16 +128,12 @@ export default function LoginScreen() {
         </View>
 
         {/* Password field */}
-        <View style={styles.field}>
-          <Text style={[styles.label, passwordFocused && styles.labelFocused]}>PASSWORD</Text>
+        <View className="mb-[14px]">
+          <Text className={`mb-[5px] text-[11px] font-bold tracking-[0.8px] ${passwordFocused ? 'text-[#1a9e7a]' : 'text-[#6b8f85]'}`}>PASSWORD</Text>
           <TextInput
             value={password}
             onChangeText={(v) => { setPassword(v); if (error) setError(''); }}
-            style={[
-              styles.input,
-              passwordFocused && styles.inputFocused,
-              error && password.trim().length < 4 && styles.inputError,
-            ]}
+            className={`rounded-xl border-[1.5px] px-[14px] py-[13px] text-[15px] font-semibold text-[#1a2e2b] ${passwordFocused ? 'border-[#1a9e7a] bg-[#f7fdfb]' : 'border-[#d4e5de] bg-white'} ${error && password.trim().length < 4 ? 'border-[#dc4c3e]' : ''}`}
             placeholder="Min. 4 characters"
             placeholderTextColor="#b0c9c2"
             secureTextEntry
@@ -149,235 +146,28 @@ export default function LoginScreen() {
 
         {/* Error */}
         {error ? (
-          <View style={styles.errorRow}>
-            <View style={styles.errorDot} />
-            <Text style={styles.errorText}>{error}</Text>
+          <View className="-mt-[6px] mb-2 flex-row items-center gap-[5px]">
+            <View className="h-[5px] w-[5px] rounded-[3px] bg-[#dc4c3e]" />
+            <Text className="text-xs font-bold text-[#dc4c3e]">{error}</Text>
           </View>
         ) : null}
 
         {/* Button */}
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <Pressable
-            style={styles.btn}
+            className="mt-1 flex-row items-center justify-center gap-[10px] rounded-xl bg-[#1a9e7a] py-[14px]"
             onPress={handleLogin}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}>
-            <Text style={styles.btnText}>Sign In</Text>
-            <View style={styles.btnArrow}>
-              <Text style={styles.btnArrowText}>→</Text>
+            <Text className="text-[15px] font-extrabold tracking-[0.2px] text-white">Sign In</Text>
+            <View className="h-6 w-6 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
+              <Text className="text-sm font-extrabold text-white">→</Text>
             </View>
           </Pressable>
         </Animated.View>
 
-        <Text style={styles.footerHint}>Use any valid name & password (4+ chars)</Text>
+        <Text className="mt-[14px] text-center text-[11px] font-semibold tracking-[0.2px] text-[#a0bcb6]">Use any valid name & password (4+ chars)</Text>
       </Animated.View>
     </KeyboardAvoidingView>
   );
 }
-
-const TEAL = '#1a9e7a';
-const BG = '#eef4f0';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BG,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: BG,
-    gap: 10,
-  },
-  loadingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: TEAL,
-  },
-  loadingText: {
-    color: '#6b8f85',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  deco: {
-    position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 1.5,
-  },
-  decoLarge: {
-    width: 160,
-    height: 160,
-    top: -50,
-    right: -50,
-    backgroundColor: 'rgba(26,158,122,0.07)',
-    borderColor: 'rgba(26,158,122,0.12)',
-  },
-  decoSmall: {
-    width: 90,
-    height: 90,
-    top: 28,
-    right: 28,
-    backgroundColor: 'rgba(26,158,122,0.04)',
-    borderColor: 'rgba(26,158,122,0.09)',
-  },
-  inner: {
-    gap: 0,
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 28,
-  },
-  brandMark: {
-    width: 36,
-    height: 36,
-    backgroundColor: TEAL,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  brandDiamond: {
-    width: 14,
-    height: 14,
-    backgroundColor: '#fff',
-    borderRadius: 3,
-    transform: [{ rotate: '45deg' }],
-  },
-  brandName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1a2e2b',
-    letterSpacing: -0.3,
-  },
-  hero: {
-    marginBottom: 24,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1a2e2b',
-    letterSpacing: -0.5,
-    lineHeight: 34,
-  },
-  heroSub: {
-    fontSize: 14,
-    color: '#6b8f85',
-    fontWeight: '600',
-    marginTop: 5,
-  },
-  warnBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    backgroundColor: '#fffbeb',
-    borderColor: '#f9d56e',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 14,
-  },
-  warnIcon: {
-    color: '#b45309',
-    fontSize: 13,
-    marginTop: 1,
-  },
-  warnText: {
-    flex: 1,
-    color: '#92400e',
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 17,
-  },
-  field: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6b8f85',
-    letterSpacing: 0.8,
-    marginBottom: 5,
-  },
-  labelFocused: {
-    color: TEAL,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#d4e5de',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    backgroundColor: '#ffffff',
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1a2e2b',
-  },
-  inputFocused: {
-    borderColor: TEAL,
-    backgroundColor: '#f7fdfb',
-  },
-  inputError: {
-    borderColor: '#dc4c3e',
-  },
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 8,
-    marginTop: -6,
-  },
-  errorDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#dc4c3e',
-  },
-  errorText: {
-    color: '#dc4c3e',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: TEAL,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  btnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  btnArrow: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnArrowText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  footerHint: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: '#a0bcb6',
-    fontWeight: '600',
-    marginTop: 14,
-    letterSpacing: 0.2,
-  },
-});
