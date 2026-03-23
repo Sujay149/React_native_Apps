@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { clearAnalyticsUser, setAnalyticsUser, trackLoginSuccess, trackLogout } from '@/utils/analytics';
 
 type TaskFilter = 'all' | 'open' | 'done';
 export type TaskStatus = 'open' | 'in-progress' | 'completed';
@@ -82,13 +83,28 @@ export const useAppStore = create<AppState>()(
       tasks: [],
       filter: 'all',
 
-      login: (userName) => set({ isAuthenticated: true, userName }),
+      login: (userName) => {
+        const trimmedUser = userName.trim();
+        const analyticsUserId = trimmedUser.toLowerCase().replace(/\s+/g, '_');
+
+        void setAnalyticsUser(analyticsUserId, trimmedUser);
+        trackLoginSuccess(trimmedUser);
+
+        set({ isAuthenticated: true, userName: trimmedUser });
+      },
 
       logout: () =>
-        set({
-          isAuthenticated: false,
-          userName: '',
-          filter: 'all',
+        set((state) => {
+          if (state.userName) {
+            trackLogout(state.userName);
+          }
+          void clearAnalyticsUser();
+
+          return {
+            isAuthenticated: false,
+            userName: '',
+            filter: 'all',
+          };
         }),
 
       createTask: (title, description = '', priority = 'medium', location) =>

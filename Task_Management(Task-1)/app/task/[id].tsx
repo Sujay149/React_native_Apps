@@ -18,7 +18,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppHydration, useAppStore, TaskPriority, TaskStatus } from '@/stores/use-app-store';
 import { getCurrentLocation } from '@/utils/location';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/image';
-import { trackPhotoAttached, trackLocationAdded } from '@/utils/analytics';
+import { trackPhotoAttached, trackLocationAdded, trackTaskModified } from '@/utils/analytics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TaskDetailScreen() {
@@ -66,12 +66,25 @@ export default function TaskDetailScreen() {
       return;
     }
 
+    const trimmedDescription = description.trim();
+    const modifiedFields: string[] = [];
+
+    if (task.title !== trimmedTitle) modifiedFields.push('title');
+    if (task.description !== trimmedDescription) modifiedFields.push('description');
+    if (task.priority !== priority) modifiedFields.push('priority');
+    if (task.status !== status) modifiedFields.push('status');
+
     updateTask(taskId, {
       title: trimmedTitle,
-      description: description.trim(),
+      description: trimmedDescription,
       priority,
       status,
     });
+
+    if (modifiedFields.length > 0) {
+      trackTaskModified(taskId, modifiedFields);
+    }
+
     setError('');
     router.back();
   };

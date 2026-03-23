@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    { "id": 1, "title": "Fix login bug", "status": "completed", "priority": "high", "createdAt": "2026-03-10", "completedAt": "2026-03-11", "timeTaken": 2, "image": true },
+    { "id": 2, "title": "Design dashboard UI", "status": "pending", "priority": "medium", "createdAt": "2026-03-11", "completedAt": null, "timeTaken": 0, "image": false },
+    { "id": 3, "title": "API integration", "status": "completed", "priority": "high", "createdAt": "2026-03-12", "completedAt": "2026-03-14", "timeTaken": 4, "image": true },
+    { "id": 4, "title": "Write docs", "status": "pending", "priority": "low", "createdAt": "2026-03-13", "completedAt": null, "timeTaken": 0, "image": false },
+    { "id": 5, "title": "Fix UI bugs", "status": "completed", "priority": "medium", "createdAt": "2026-03-14", "completedAt": "2026-03-15", "timeTaken": 1, "image": true },
+    { "id": 6, "title": "Add filters", "status": "pending", "priority": "high", "createdAt": "2026-03-15", "completedAt": null, "timeTaken": 0, "image": false },
+    { "id": 7, "title": "Optimize performance", "status": "completed", "priority": "high", "createdAt": "2026-03-16", "completedAt": "2026-03-18", "timeTaken": 3, "image": true },
+    { "id": 8, "title": "Update dependencies", "status": "pending", "priority": "low", "createdAt": "2026-03-17", "completedAt": null, "timeTaken": 0, "image": true },
+    { "id": 9, "title": "Add charts", "status": "completed", "priority": "medium", "createdAt": "2026-03-18", "completedAt": "2026-03-19", "timeTaken": 2, "image": true },
+    { "id": 10, "title": "Refactor code", "status": "pending", "priority": "medium", "createdAt": "2026-03-19", "completedAt": null, "timeTaken": 0, "image": false },
+    { "id": 11, "title": "Setup routing", "status": "completed", "priority": "low", "createdAt": "2026-03-10", "completedAt": "2026-03-11", "timeTaken": 1, "image": false },
+    { "id": 12, "title": "Fix crashes", "status": "completed", "priority": "high", "createdAt": "2026-03-11", "completedAt": "2026-03-13", "timeTaken": 2, "image": true },
+    { "id": 13, "title": "Add notifications", "status": "pending", "priority": "medium", "createdAt": "2026-03-12", "completedAt": null, "timeTaken": 0, "image": false },
+    { "id": 14, "title": "Improve UX", "status": "completed", "priority": "low", "createdAt": "2026-03-13", "completedAt": "2026-03-14", "timeTaken": 1, "image": true },
+    { "id": 15, "title": "Security fixes", "status": "pending", "priority": "high", "createdAt": "2026-03-14", "completedAt": null, "timeTaken": 0, "image": false }
+  ]
+}

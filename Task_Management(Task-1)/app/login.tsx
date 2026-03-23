@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useAppHydration, useAppStore } from '@/stores/use-app-store';
+import { trackEvent } from '@/utils/analytics';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,11 +42,13 @@ export default function LoginScreen() {
   const handleLogin = () => {
     if (!name.trim()) {
       setError('Name is required.');
+      trackEvent('user_login_failed', { reason: 'missing_name' });
       triggerShake();
       return;
     }
     if (password.trim().length < 4) {
       setError('Password must be at least 4 characters.');
+      trackEvent('user_login_failed', { reason: 'short_password' });
       triggerShake();
       return;
     }

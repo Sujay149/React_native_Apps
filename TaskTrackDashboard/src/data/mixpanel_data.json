@@ -1,0 +1,348 @@
+[
+  {
+    "event": "task_created",
+    "properties": {
+      "time": 1773995782,
+      "distinct_id": "sujay",
+      "$insert_id": "pDgAacrCvvCykCynAurdpyAnxlCtgeDCmynA",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773995782915,
+      "$mp_event_size": 369,
+      "$user_id": "sujay",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773995783045,
+      "platform": "android",
+      "priority": "low",
+      "task_id": "Hsj",
+      "timestamp": "2026-03-20T01:36:22",
+      "user_id": "sujay",
+      "user_name": "Sujay"
+    }
+  },
+  {
+    "event": "task_modified",
+    "properties": {
+      "time": 1773987427,
+      "distinct_id": "sujay",
+      "$insert_id": "tfjfurBAnbjytvkmazzowwlnrabFmcclcaCs",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987427727,
+      "$mp_event_size": 436,
+      "$user_id": "sujay",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "modified_fields": [
+        "priority",
+        "status"
+      ],
+      "modified_fields_count": 2,
+      "mp_processing_time_ms": 1773987427864,
+      "platform": "android",
+      "task_id": "1773986959595-461242",
+      "timestamp": "2026-03-19T23:17:07",
+      "user_id": "sujay",
+      "user_name": "Sujay"
+    }
+  },
+  {
+    "event": "user_login_success",
+    "properties": {
+      "time": 1773987301,
+      "distinct_id": "sujay",
+      "$insert_id": "sjhgubsoomemcrCEAByAFBsckdxBvEFmeurf",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987301606,
+      "$mp_event_size": 342,
+      "$user_id": "sujay",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987301772,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:15:01",
+      "user_id": "sujay",
+      "user_name": "Sujay"
+    }
+  },
+  {
+    "event": "profile_viewed",
+    "properties": {
+      "time": 1773987295,
+      "distinct_id": "anon_1773987275162_bbcd2fd8",
+      "$insert_id": "vvDtlFwqkjncbzjyoxjCBDhFkBhnlnehuvbF",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987295400,
+      "$mp_event_size": 384,
+      "$user_id": "anon_1773987275162_bbcd2fd8",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "completed_tasks": 3,
+      "completion_rate": "42.86",
+      "mp_processing_time_ms": 1773987312059,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:14:55",
+      "total_tasks": 7
+    }
+  },
+  {
+    "event": "user_logout",
+    "properties": {
+      "time": 1773987295,
+      "distinct_id": "anon_1773987275162_bbcd2fd8",
+      "$insert_id": "dvszfloewueyzpBfpAixCjzlanEqteeckdrq",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987295875,
+      "$mp_event_size": 338,
+      "$user_id": "anon_1773987275162_bbcd2fd8",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987295987,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:14:55",
+      "user_name": "Hdhd"
+    }
+  },
+  {
+    "event": "profile_viewed",
+    "properties": {
+      "time": 1773987284,
+      "distinct_id": "anon_1773987275162_bbcd2fd8",
+      "$insert_id": "BmoehBArbdnlzeFuAAmwlpDwizkaEFntECme",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987284894,
+      "$mp_event_size": 384,
+      "$user_id": "anon_1773987275162_bbcd2fd8",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "completed_tasks": 3,
+      "completion_rate": "42.86",
+      "mp_processing_time_ms": 1773987285055,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:14:44",
+      "total_tasks": 7
+    }
+  },
+  {
+    "event": "app_opened",
+    "properties": {
+      "time": 1773987276,
+      "distinct_id": "anon_1773987275162_bbcd2fd8",
+      "$insert_id": "swhCcmwuCFvsCbgwqCAgrxhfavqrzaiDbFof",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987276956,
+      "$mp_event_size": 318,
+      "$user_id": "anon_1773987275162_bbcd2fd8",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987284205,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:14:36"
+    }
+  },
+  {
+    "event": "app_opened",
+    "properties": {
+      "time": 1773987219,
+      "distinct_id": "anon_1773987219045_eff54164",
+      "$insert_id": "DxuvBDiAbfCasfAlasulkrEBkzkjnFbwCnky",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987219481,
+      "$mp_event_size": 318,
+      "$user_id": "anon_1773987219045_eff54164",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987219660,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:13:39"
+    }
+  },
+  {
+    "event": "photo_attached",
+    "properties": {
+      "time": 1773987103,
+      "distinct_id": "hdhd",
+      "$insert_id": "gsmbvwtqnpkeziaosDkFpEcAecikgzBhxkoC",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987103540,
+      "$mp_event_size": 384,
+      "$user_id": "hdhd",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987105816,
+      "photo_count": 1,
+      "platform": "android",
+      "task_id": "1773986959595-461242",
+      "timestamp": "2026-03-19T23:11:43",
+      "user_id": "hdhd",
+      "user_name": "Hdhd"
+    }
+  },
+  {
+    "event": "location_added",
+    "properties": {
+      "time": 1773987097,
+      "distinct_id": "hdhd",
+      "$insert_id": "suoszawmibyybhggfmhkdsAkzdsvellAmeia",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987098077,
+      "$mp_event_size": 413,
+      "$user_id": "hdhd",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "latitude": 17.4338743,
+      "longitude": 78.3790634,
+      "mp_processing_time_ms": 1773987098214,
+      "platform": "android",
+      "task_id": "1773986959595-461242",
+      "timestamp": "2026-03-19T23:11:37",
+      "user_id": "hdhd",
+      "user_name": "Hdhd"
+    }
+  },
+  {
+    "event": "user_login_success",
+    "properties": {
+      "time": 1773987031,
+      "distinct_id": "hdhd",
+      "$insert_id": "FrcwcbqowcuspmnwworAgsndspbcetErochf",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987031521,
+      "$mp_event_size": 339,
+      "$user_id": "hdhd",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987031872,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:10:31",
+      "user_id": "hdhd",
+      "user_name": "Hdhd"
+    }
+  },
+  {
+    "event": "user_logout",
+    "properties": {
+      "time": 1773987027,
+      "distinct_id": "anon_1773986906887_6020e4ea",
+      "$insert_id": "ufsfuqAtgtAvldktoAawiAbrFBiDcrnkdxoB",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987027659,
+      "$mp_event_size": 339,
+      "$user_id": "anon_1773986906887_6020e4ea",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773987030849,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:10:27",
+      "user_name": "Sujay"
+    }
+  },
+  {
+    "event": "profile_viewed",
+    "properties": {
+      "time": 1773987026,
+      "distinct_id": "anon_1773986906887_6020e4ea",
+      "$insert_id": "hhuhavogulBhoriCvyfCwFcfhqybCktDqExa",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773987027028,
+      "$mp_event_size": 384,
+      "$user_id": "anon_1773986906887_6020e4ea",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "completed_tasks": 3,
+      "completion_rate": "42.86",
+      "mp_processing_time_ms": 1773987027219,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:10:26",
+      "total_tasks": 7
+    }
+  },
+  {
+    "event": "task_created",
+    "properties": {
+      "time": 1773986959,
+      "distinct_id": "anon_1773986906887_6020e4ea",
+      "$insert_id": "imrvmlhseDswpqfsosbqrrEebdoBbohwnbka",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773986959845,
+      "$mp_event_size": 354,
+      "$user_id": "anon_1773986906887_6020e4ea",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773986960009,
+      "platform": "android",
+      "priority": "medium",
+      "task_id": "u",
+      "timestamp": "2026-03-19T23:09:19"
+    }
+  },
+  {
+    "event": "task_created",
+    "properties": {
+      "time": 1773986955,
+      "distinct_id": "anon_1773986906887_6020e4ea",
+      "$insert_id": "upnchvFujEAlflsfnuoidwBnixAghenkhyvE",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773986955800,
+      "$mp_event_size": 360,
+      "$user_id": "anon_1773986906887_6020e4ea",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773986957129,
+      "platform": "android",
+      "priority": "medium",
+      "task_id": "Dydgdfh",
+      "timestamp": "2026-03-19T23:09:15"
+    }
+  },
+  {
+    "event": "app_opened",
+    "properties": {
+      "time": 1773986908,
+      "distinct_id": "anon_1773986906887_6020e4ea",
+      "$insert_id": "aDAkwguzdwjfhlmvCFykznsAtrkvdzjCdFgC",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773986908642,
+      "$mp_event_size": 318,
+      "$user_id": "anon_1773986906887_6020e4ea",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773986908786,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:08:28"
+    }
+  },
+  {
+    "event": "app_opened",
+    "properties": {
+      "time": 1773986861,
+      "distinct_id": "anon_1773986861190_cf5ed244",
+      "$insert_id": "CrljhelznrpxFeeDFykiAelFEcmDkamxtynj",
+      "$mp_api_endpoint": "api.mixpanel.com",
+      "$mp_api_timestamp_ms": 1773986861744,
+      "$mp_event_size": 318,
+      "$user_id": "anon_1773986861190_cf5ed244",
+      "analytics_disabled_reason": "Expo Go native SDK unavailable",
+      "analytics_mode": "mixpanel_http",
+      "app_version": "1.0.0",
+      "mp_processing_time_ms": 1773986862080,
+      "platform": "android",
+      "timestamp": "2026-03-19T23:07:41"
+    }
+  }
+]

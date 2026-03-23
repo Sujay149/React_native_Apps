@@ -6,7 +6,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { initializeMixpanel } from '@/utils/analytics';
+import { initializeMixpanel, trackEvent } from '@/utils/analytics';
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -16,8 +16,13 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Initialize Mixpanel analytics
-    initializeMixpanel();
+    const initializeAnalytics = async () => {
+      // Initialize analytics client once when root layout mounts.
+      await initializeMixpanel();
+      await trackEvent('app_opened');
+    };
+
+    void initializeAnalytics();
   }, []);
 
   return (

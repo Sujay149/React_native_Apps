@@ -46,6 +46,7 @@
       "reactCompiler": true
     },
     "extra": {
+      "mixpanelToken": "8d65d20e23afd46ffe556a4bda5d7f47",
       "router": {},
       "eas": {
         "projectId": "6bb257d5-02b8-4e2a-8ff8-1c387738d64d"
