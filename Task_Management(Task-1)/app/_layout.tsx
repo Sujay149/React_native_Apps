@@ -32,6 +32,8 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="task/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="task/field-report" options={{ headerShown: false }} />
+        <Stack.Screen name="task/report/[reportId]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

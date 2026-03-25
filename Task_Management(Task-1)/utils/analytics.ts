@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { loadMixpanel } from './mixpanel-loader';
 
 const EXPO_EXTRA = (Constants.expoConfig?.extra ?? {}) as { mixpanelToken?: string };
 const MIXPANEL_TOKEN = EXPO_EXTRA.mixpanelToken?.trim() ?? '';
@@ -226,7 +227,8 @@ export const initializeMixpanel = async () => {
   }
 
   try {
-    const { Mixpanel } = await import('mixpanel-react-native');
+    const Mixpanel = await loadMixpanel();
+    if (!Mixpanel) throw new Error('Mixpanel SDK not available on this platform');
     const client = new Mixpanel(MIXPANEL_TOKEN, false) as MixpanelClient;
     await client.init();
     mixpanel = client;
@@ -350,5 +352,19 @@ export const trackProfileViewed = (totalTasks: number, completedTasks: number) =
     total_tasks: totalTasks,
     completed_tasks: completedTasks,
     completion_rate: totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(2) : 0,
+  });
+};
+
+export const trackFieldReportCreated = (taskId: string, checklistFailedCount: number, photoCount: number) => {
+  trackEvent('field_report_created', {
+    task_id: taskId,
+    checklist_failed_count: checklistFailedCount,
+    photo_count: photoCount,
+  });
+};
+
+export const trackFieldReportSynced = (syncedCount: number) => {
+  trackEvent('field_report_synced', {
+    synced_count: syncedCount,
   });
 };

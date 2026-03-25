@@ -7,6 +7,11 @@ export default function IndexRoute() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const { hasHydrated, usedFallback } = useAppHydration();
 
+  // Debug log hydration state
+  if (typeof window !== 'undefined') {
+    console.log('[TaskTrack] Hydration state:', { hasHydrated, usedFallback });
+  }
+
   if (!hasHydrated && !usedFallback) {
     return (
       <View className="flex-1 items-center justify-center bg-[#f8fafc]">

@@ -28,6 +28,7 @@ export default function TaskDetailScreen() {
   const { hasHydrated } = useAppHydration();
   const {
     tasks,
+    fieldReports,
     isAuthenticated,
     updateTask,
     deleteTask,
@@ -38,6 +39,10 @@ export default function TaskDetailScreen() {
     useAppStore();
 
   const task = useMemo(() => tasks.find((item) => item.id === taskId), [taskId, tasks]);
+  const taskReports = useMemo(
+    () => fieldReports.filter((report) => report.taskId === taskId),
+    [fieldReports, taskId],
+  );
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -154,6 +159,17 @@ export default function TaskDetailScreen() {
         },
       },
     ]);
+  };
+
+  const handleCreateFieldReport = () => {
+    router.push({
+      pathname: '/task/field-report',
+      params: { taskId },
+    });
+  };
+
+  const openReport = (reportId: string) => {
+    router.push({ pathname: '/task/report/[reportId]', params: { reportId } });
   };
 
   if (!hasHydrated && Platform.OS !== 'web') {
@@ -308,6 +324,46 @@ export default function TaskDetailScreen() {
             <View className="gap-1.5 py-2">
               <Text className="text-xs text-[#64748b]">Created: {new Date(task.createdAt).toLocaleString()}</Text>
               <Text className="text-xs text-[#64748b]">Updated: {new Date(task.updatedAt).toLocaleString()}</Text>
+            </View>
+
+            <Pressable
+              className="flex-row items-center justify-center gap-2 rounded-[10px] border border-[#0f766e] bg-[#f0fdfa] py-3.5"
+              onPress={handleCreateFieldReport}>
+              <MaterialCommunityIcons name="file-document-edit-outline" size={20} color="#0f766e" />
+              <Text className="text-base font-semibold text-[#0f766e]">Create Field Report</Text>
+            </Pressable>
+
+            <View className="gap-2 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm font-semibold text-[#0f172a]">Report History</Text>
+                <Text className="text-xs text-[#64748b]">{taskReports.length} total</Text>
+              </View>
+
+              {taskReports.length === 0 ? (
+                <Text className="text-xs text-[#64748b]">No reports submitted for this task yet.</Text>
+              ) : (
+                taskReports.map((report) => (
+                  <Pressable
+                    key={report.id}
+                    onPress={() => openReport(report.id)}
+                    className="rounded-lg border border-[#e2e8f0] px-3 py-2.5">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-sm font-semibold text-[#0f172a]">
+                        {new Date(report.createdAt).toLocaleDateString()} {new Date(report.createdAt).toLocaleTimeString()}
+                      </Text>
+                      <Text
+                        className={`text-xs font-semibold ${
+                          report.syncStatus === 'pending' ? 'text-[#b45309]' : 'text-[#166534]'
+                        }`}>
+                        {report.syncStatus === 'pending' ? 'Pending Sync' : 'Synced'}
+                      </Text>
+                    </View>
+                    <Text className="mt-1 text-xs text-[#64748b]" numberOfLines={1}>
+                      {report.observations || 'No observations'}
+                    </Text>
+                  </Pressable>
+                ))
+              )}
             </View>
 
             <Pressable className="flex-row items-center justify-center gap-2 rounded-[10px] bg-[#0f766e] py-3.5" onPress={handleSave}>

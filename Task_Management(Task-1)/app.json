@@ -9,10 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "TaskTrack records audio to convert spoken field observations into text."
+      }
     },
     "android": {
       "package": "com.sujay.tasktrack",
+      "permissions": [
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -47,6 +53,8 @@
     },
     "extra": {
       "mixpanelToken": "8d65d20e23afd46ffe556a4bda5d7f47",
+      "sarvamApiKey": "",
+      "sarvamSttEndpoint": "https://api.sarvam.ai/speech-to-text",
       "router": {},
       "eas": {
         "projectId": "6bb257d5-02b8-4e2a-8ff8-1c387738d64d"
