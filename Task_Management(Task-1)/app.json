@@ -45,7 +45,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-speech-recognition"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -53,8 +54,6 @@
     },
     "extra": {
       "mixpanelToken": "8d65d20e23afd46ffe556a4bda5d7f47",
-      "sarvamApiKey": "",
-      "sarvamSttEndpoint": "https://api.sarvam.ai/speech-to-text",
       "router": {},
       "eas": {
         "projectId": "6bb257d5-02b8-4e2a-8ff8-1c387738d64d"

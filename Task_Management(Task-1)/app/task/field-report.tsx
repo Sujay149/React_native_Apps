@@ -18,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SignatureScreen from 'react-native-signature-canvas';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Network from 'expo-network';
-import { Audio } from 'expo-av';
 import Constants from 'expo-constants';
 import { captureRef } from 'react-native-view-shot';
 import { reverseGeocode, getCurrentLocation } from '@/utils/location';
@@ -36,14 +35,6 @@ type Coordinates = {
   latitude: number;
   longitude: number;
 };
-
-const EXPO_EXTRA = (Constants.expoConfig?.extra ?? {}) as {
-  sarvamApiKey?: string;
-  sarvamSttEndpoint?: string;
-};
-const SARVAM_API_KEY = EXPO_EXTRA.sarvamApiKey?.trim() ?? '';
-const SARVAM_STT_ENDPOINT =
-  EXPO_EXTRA.sarvamSttEndpoint?.trim() ?? 'https://api.sarvam.ai/speech-to-text';
 
 const TOTAL_STEPS = 5;
 
@@ -112,34 +103,23 @@ const getVoiceToTextWeb = async (): Promise<string | null> => {
   });
 };
 
-const transcribeWithSarvam = async (audioUri: string): Promise<string | null> => {
-  if (!SARVAM_API_KEY) {
+const getSpeechRecognitionModule = async () => {
+  // expo-speech-recognition is not bundled in Expo Go.
+  if (Constants.appOwnership === 'expo') {
     return null;
   }
 
-  const formData = new FormData();
-  formData.append('file', {
-    uri: audioUri,
-    name: `field-report-${Date.now()}.m4a`,
-    type: 'audio/m4a',
-  } as unknown as Blob);
-  formData.append('model', 'saarika:v2');
-
   try {
-    const response = await fetch(SARVAM_STT_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'api-subscription-key': SARVAM_API_KEY,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const payload = (await response.json()) as Record<string, any>;
-    return payload.transcript ?? payload.text ?? payload.data?.transcript ?? null;
+    const speechPackage = (await import('expo-speech-recognition')) as {
+      ExpoSpeechRecognitionModule?: {
+        addListener?: (eventName: string, listener: (event: any) => void) => { remove: () => void };
+        start?: (options?: Record<string, unknown>) => void;
+        stop?: () => void;
+        requestPermissionsAsync?: () => Promise<{ granted: boolean }>;
+        isRecognitionAvailable?: () => boolean;
+      };
+    };
+    return speechPackage.ExpoSpeechRecognitionModule ?? null;
   } catch {
     return null;
   }
@@ -161,7 +141,6 @@ export default function FieldReportScreen() {
   const params = useLocalSearchParams<{ taskId: string }>();
   const taskId = params.taskId;
   const signatureRef = useRef<any>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
   const watermarkCaptureRef = useRef<View | null>(null);
   const watermarkResolveRef = useRef<((uri: string) => void) | null>(null);
   const watermarkRejectRef = useRef<((error: Error) => void) | null>(null);
@@ -193,6 +172,81 @@ export default function FieldReportScreen() {
   const [isSigning, setIsSigning] = useState(false);
   const [watermarkJob, setWatermarkJob] = useState<{ sourceUri: string; watermarkText: string } | null>(null);
   const [watermarkImageLoaded, setWatermarkImageLoaded] = useState(false);
+
+  const transcribeWithOnDeviceSpeech = async (): Promise<string | null> => {
+    const speechRecognition = await getSpeechRecognitionModule();
+    if (!speechRecognition) {
+      Alert.alert(
+        'Voice to text unavailable',
+        'On-device speech recognition is not available in Expo Go. Use a development build (expo run:android) and open with dev client.',
+      );
+      return null;
+    }
+
+    if (speechRecognition.isRecognitionAvailable && !speechRecognition.isRecognitionAvailable()) {
+      Alert.alert('Voice to text unavailable', 'Speech recognition service is not available on this device.');
+      return null;
+    }
+
+    const permission = await speechRecognition.requestPermissionsAsync?.();
+    if (!permission?.granted) {
+      Alert.alert('Permission required', 'Microphone and speech permissions are required for voice input.');
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      let transcript = '';
+      let settled = false;
+
+      const timeoutId = setTimeout(() => {
+        speechRecognition.stop?.();
+      }, 15000);
+
+      const cleanup = () => {
+        resultSubscription?.remove();
+        endSubscription?.remove();
+        errorSubscription?.remove();
+        clearTimeout(timeoutId);
+      };
+
+      const settle = (value: string | null) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        setIsRecordingVoice(false);
+        resolve(value);
+      };
+
+      const resultSubscription = speechRecognition.addListener?.('result', (event: any) => {
+        const candidate = event?.results?.[0]?.transcript;
+        if (typeof candidate === 'string' && candidate.trim()) {
+          transcript = candidate.trim();
+        }
+      });
+
+      const endSubscription = speechRecognition.addListener?.('end', () => {
+        settle(transcript || null);
+      });
+
+      const errorSubscription = speechRecognition.addListener?.('error', () => {
+        settle(null);
+      });
+
+      try {
+        setIsRecordingVoice(true);
+        Alert.alert('Listening', 'Speak now. Recognition will stop automatically.');
+        speechRecognition.start?.({
+          lang: 'en-US',
+          interimResults: true,
+          maxAlternatives: 1,
+          continuous: false,
+          addsPunctuation: true,
+        });
+      } catch {
+        settle(null);
+      }
+    });
+  };
 
   const pendingReportsCount = useMemo(
     () => fieldReports.filter((report) => report.syncStatus === 'pending').length,
@@ -411,54 +465,9 @@ export default function FieldReportScreen() {
     if (Platform.OS === 'web') {
       transcript = await getVoiceToTextWeb();
     } else {
-      if (!SARVAM_API_KEY) {
-        Alert.alert(
-          'Voice to text unavailable',
-          'Set expo.extra.sarvamApiKey in app.json to enable native transcription.',
-        );
-        return;
-      }
-
+      setIsTranscribing(true);
       try {
-        if (!isRecordingVoice) {
-          const permission = await Audio.requestPermissionsAsync();
-          if (permission.status !== 'granted') {
-            Alert.alert('Permission required', 'Microphone permission is required for voice input.');
-            return;
-          }
-
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-          });
-
-          const recording = new Audio.Recording();
-          await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-          await recording.startAsync();
-          recordingRef.current = recording;
-          setIsRecordingVoice(true);
-          Alert.alert('Recording started', 'Tap Voice to text again to stop and transcribe.');
-          return;
-        }
-
-        setIsTranscribing(true);
-        setIsRecordingVoice(false);
-
-        const activeRecording = recordingRef.current;
-        if (!activeRecording) {
-          return;
-        }
-
-        await activeRecording.stopAndUnloadAsync();
-        recordingRef.current = null;
-        const uri = activeRecording.getURI();
-
-        if (!uri) {
-          Alert.alert('Voice to text', 'No audio captured. Please try again.');
-          return;
-        }
-
-        transcript = await transcribeWithSarvam(uri);
+        transcript = await transcribeWithOnDeviceSpeech();
       } finally {
         setIsTranscribing(false);
       }
