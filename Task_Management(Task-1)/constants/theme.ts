@@ -1,50 +1,81 @@
-
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+export const theme = {
+	colors: {
+		background: '#F8FAFC',
+		surface: '#FFFFFF',
+		textPrimary: '#0F172A',
+		textSecondary: '#475569',
+		textMuted: '#94A3B8',
+		border: '#E2E8F0',
+		borderSoft: '#EEF2FF',
+		primary: '#1E1B4B',
+		primarySoft: '#EEF2FF',
+		accent: '#0F766E',
+		success: '#16A34A',
+		successSoft: '#DCFCE7',
+		warning: '#D97706',
+		warningSoft: '#FEF3C7',
+		danger: '#DC2626',
+		dangerSoft: '#FEE2E2',
+		info: '#2563EB',
+		black: '#000000',
+		overlay: 'rgba(15, 23, 42, 0.45)',
+		overlayLight: 'rgba(255, 255, 255, 0.2)',
+		warningBannerBg: '#FFFBEB',
+		warningText: '#713F12',
+		gradientA: '#E5DCFA',
+		gradientB: '#F7E7EF',
+		gradientC: '#FFFFFF',
+		skeletonBase: '#E2E8F0',
+		skeletonHighlight: '#F1F5F9',
+	},
+	typography: {
+		h1: 30,
+		h2: 22,
+		h3: 18,
+		body: 15,
+		bodySmall: 13,
+		caption: 12,
+		micro: 11,
+		weightRegular: '400' as const,
+		weightMedium: '500' as const,
+		weightSemibold: '600' as const,
+		weightBold: '700' as const,
+		weightExtrabold: '800' as const,
+	},
+	spacing: {
+		xs: 4,
+		sm: 8,
+		md: 12,
+		lg: 16,
+		xl: 20,
+		xxl: 24,
+		xxxl: 32,
+	},
+	radii: {
+		sm: 8,
+		md: 12,
+		lg: 16,
+		xl: 20,
+		xxl: 24,
+		round: 999,
+	},
+	shadows: {
+		card: {
+			shadowColor: '#1E1B4B',
+			shadowOpacity: 0.07,
+			shadowRadius: 10,
+			shadowOffset: { width: 0, height: 4 },
+			elevation: 2,
+		},
+		soft: {
+			shadowColor: '#1E1B4B',
+			shadowOpacity: 0.04,
+			shadowRadius: 8,
+			shadowOffset: { width: 0, height: 3 },
+			elevation: 1,
+		},
+	},
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export type AppTheme = typeof theme;
+

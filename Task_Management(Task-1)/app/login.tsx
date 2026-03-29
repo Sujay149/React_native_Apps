@@ -8,7 +8,12 @@ import {
   Text,
   TextInput,
   View,
+  StyleSheet,
+  ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppHydration, useAppStore } from '@/stores/use-app-store';
 import { trackEvent } from '@/utils/analytics';
@@ -22,34 +27,25 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [nameFocused, setNameFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const shakeAnim = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const triggerShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 6, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -6, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 3, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 55, useNativeDriver: true }),
-    ]).start();
-  };
+  // Fade-in on mount
+  useRef(
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true, delay: 100 }).start()
+  );
 
   const handleLogin = () => {
     if (!name.trim()) {
-      setError('Name is required.');
+      setError('Please enter your email/name.');
       trackEvent('user_login_failed', { reason: 'missing_name' });
-      triggerShake();
       return;
     }
     if (password.trim().length < 4) {
       setError('Password must be at least 4 characters.');
       trackEvent('user_login_failed', { reason: 'short_password' });
-      triggerShake();
       return;
     }
     login(name.trim());
@@ -57,16 +53,15 @@ export default function LoginScreen() {
   };
 
   const handlePressIn = () =>
-    Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 40, bounciness: 4 }).start();
+    Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start();
 
   const handlePressOut = () =>
-    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 40, bounciness: 4 }).start();
+    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start();
 
   if (!hasHydrated && Platform.OS !== 'web') {
     return (
-      <View className="flex-1 items-center justify-center gap-[10px] bg-[#eef4f0]">
-        <View className="h-2 w-2 rounded-full bg-[#1a9e7a]" />
-        <Text className="text-sm font-semibold text-[#6b8f85]">Loading...</Text>
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingDot} />
       </View>
     );
   }
@@ -74,103 +69,228 @@ export default function LoginScreen() {
   if (isAuthenticated) return <Redirect href="/(tabs)" />;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-      className="flex-1 justify-center bg-[#eef4f0] px-6 py-8">
-
-      {/* Decorative circles */}
-      <View
-        className="absolute -right-[50px] -top-[50px] h-[160px] w-[160px] rounded-full border-[1.5px] border-[rgba(26,158,122,0.12)] bg-[rgba(26,158,122,0.07)]"
-        pointerEvents="none"
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={['#E5DCFA', '#F7E7EF', '#FFFFFF']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
       />
-      <View
-        className="absolute right-7 top-7 h-[90px] w-[90px] rounded-full border-[1.5px] border-[rgba(26,158,122,0.09)] bg-[rgba(26,158,122,0.04)]"
-        pointerEvents="none"
-      />
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', android: undefined })}
+          style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+              
+              {/* App Icon */}
+              <View style={styles.iconContainer}>
+                 <View style={styles.appIcon}>
+                    <Text style={styles.appIconText}>A</Text>
+                 </View>
+              </View>
 
-      <Animated.View className="gap-0" style={{ transform: [{ translateX: shakeAnim }] }}>
+              {/* Hero */}
+              <View style={styles.hero}>
+                <Text style={styles.heroTitle}>Get Started Today</Text>
+                <Text style={styles.heroSub}>Sign up in just a few steps and take control of your field.</Text>
+              </View>
 
-        {/* Brand */}
-        <View className="mb-7 flex-row items-center gap-[10px]">
-          <View className="h-9 w-9 items-center justify-center rounded-[10px] bg-[#1a9e7a]">
-            <View className="h-[14px] w-[14px] rounded-[3px] bg-white" style={{ transform: [{ rotate: '45deg' }] }} />
-          </View>
-          <Text className="text-[18px] font-extrabold tracking-[-0.3px] text-[#1a2e2b]">TaskTrack</Text>
-        </View>
+              {/* Name Field (Labeled as Email in design) */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Email</Text>
+                <View style={styles.inputWrap}>
+                  <MaterialCommunityIcons
+                    name="email-outline"
+                    size={20}
+                    color="#94A3B8"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    value={name}
+                    onChangeText={(v) => { setName(v); if (error) setError(''); }}
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#A1A1AA"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                  />
+                </View>
+              </View>
 
-        {/* Hero */}
-        <View className="mb-6">
-          <Text className="text-[28px] font-extrabold leading-[34px] tracking-[-0.5px] text-[#1a2e2b]">Welcome back 👋</Text>
-          <Text className="mt-[5px] text-sm font-semibold text-[#6b8f85]">Sign in to manage your tasks</Text>
-        </View>
+              {/* Password Field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Password</Text>
+                <View style={styles.inputWrap}>
+                  <MaterialCommunityIcons
+                    name="lock-outline"
+                    size={20}
+                    color="#94A3B8"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    value={password}
+                    onChangeText={(v) => { setPassword(v); if (error) setError(''); }}
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#A1A1AA"
+                    secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
+                  />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={10} style={{ paddingHorizontal: 10 }}>
+                    <MaterialCommunityIcons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color="#94A3B8"
+                    />
+                  </Pressable>
+                </View>
+              </View>
 
-        {/* Storage warning */}
-        {Platform.OS === 'web' && usedFallback ? (
-          <View className="mb-[14px] flex-row items-start gap-2 rounded-xl border border-[#f9d56e] bg-[#fffbeb] p-[10px]">
-            <Text className="mt-px text-[13px] text-[#b45309]">⚠</Text>
-            <Text className="flex-1 text-xs font-semibold leading-[17px] text-[#92400e]">
-              Storage unavailable — data may not persist in this session.
-            </Text>
-          </View>
-        ) : null}
+              <View style={styles.optionsRow}>
+                <View style={styles.checkboxRow}>
+                  <View style={styles.checkbox}></View>
+                  <Text style={styles.rememberText}>Remember me</Text>
+                </View>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </View>
 
-        {/* Name field */}
-        <View className="mb-[14px]">
-          <Text className={`mb-[5px] text-[11px] font-bold tracking-[0.8px] ${nameFocused ? 'text-[#1a9e7a]' : 'text-[#6b8f85]'}`}>NAME</Text>
-          <TextInput
-            value={name}
-            onChangeText={(v) => { setName(v); if (error) setError(''); }}
-            className={`rounded-xl border-[1.5px] px-[14px] py-[13px] text-[15px] font-semibold text-[#1a2e2b] ${nameFocused ? 'border-[#1a9e7a] bg-[#f7fdfb]' : 'border-[#d4e5de] bg-white'} ${error && !name.trim() ? 'border-[#dc4c3e]' : ''}`}
-            placeholder="Your name"
-            placeholderTextColor="#b0c9c2"
-            autoCapitalize="words"
-            returnKeyType="next"
-            onFocus={() => setNameFocused(true)}
-            onBlur={() => setNameFocused(false)}
-          />
-        </View>
+              {/* Inline error */}
+              {error ? (
+                <View style={styles.errorRow}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
 
-        {/* Password field */}
-        <View className="mb-[14px]">
-          <Text className={`mb-[5px] text-[11px] font-bold tracking-[0.8px] ${passwordFocused ? 'text-[#1a9e7a]' : 'text-[#6b8f85]'}`}>PASSWORD</Text>
-          <TextInput
-            value={password}
-            onChangeText={(v) => { setPassword(v); if (error) setError(''); }}
-            className={`rounded-xl border-[1.5px] px-[14px] py-[13px] text-[15px] font-semibold text-[#1a2e2b] ${passwordFocused ? 'border-[#1a9e7a] bg-[#f7fdfb]' : 'border-[#d4e5de] bg-white'} ${error && password.trim().length < 4 ? 'border-[#dc4c3e]' : ''}`}
-            placeholder="Min. 4 characters"
-            placeholderTextColor="#b0c9c2"
-            secureTextEntry
-            returnKeyType="done"
-            onSubmitEditing={handleLogin}
-            onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
-          />
-        </View>
+              {/* Continue Button */}
+              <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 10 }}>
+                <Pressable
+                  onPress={handleLogin}
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
+                  style={styles.btn}>
+                  <Text style={styles.btnText}>Continue</Text>
+                </Pressable>
+              </Animated.View>
 
-        {/* Error */}
-        {error ? (
-          <View className="-mt-[6px] mb-2 flex-row items-center gap-[5px]">
-            <View className="h-[5px] w-[5px] rounded-[3px] bg-[#dc4c3e]" />
-            <Text className="text-xs font-bold text-[#dc4c3e]">{error}</Text>
-          </View>
-        ) : null}
+              <View style={styles.orContainer}>
+                 <View style={styles.orLine} />
+                 <Text style={styles.orText}>or</Text>
+                 <View style={styles.orLine} />
+              </View>
 
-        {/* Button */}
-        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <Pressable
-            className="mt-1 flex-row items-center justify-center gap-[10px] rounded-xl bg-[#1a9e7a] py-[14px]"
-            onPress={handleLogin}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}>
-            <Text className="text-[15px] font-extrabold tracking-[0.2px] text-white">Sign In</Text>
-            <View className="h-6 w-6 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
-              <Text className="text-sm font-extrabold text-white">→</Text>
-            </View>
-          </Pressable>
-        </Animated.View>
+              <View style={styles.socialRow}>
+                 <Pressable style={styles.socialBtn}>
+                    <MaterialCommunityIcons name="google" size={20} color="#DB4437" />
+                    <Text style={styles.socialBtnText}>Google</Text>
+                 </Pressable>
+                 <Pressable style={styles.socialBtn}>
+                    <MaterialCommunityIcons name="apple" size={20} color="#000" />
+                    <Text style={styles.socialBtnText}>Apple</Text>
+                 </Pressable>
+              </View>
+              
+              <Text style={styles.footerText}>
+                By tapping "Continue", you agree to our{"\n"}
+                <Text style={{fontWeight: '700', color: '#1E1B4B'}}>Privacy Policy & Terms of Service</Text>
+              </Text>
 
-        <Text className="mt-[14px] text-center text-[11px] font-semibold tracking-[0.2px] text-[#a0bcb6]">Use any valid name & password (4+ chars)</Text>
-      </Animated.View>
-    </KeyboardAvoidingView>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1A1D28' },
+  scroll: { flexGrow: 1, paddingHorizontal: 28, paddingVertical: 40 },
+  container: { flex: 1, justifyContent: 'center', paddingTop: 20 },
+  
+  iconContainer: {
+     alignItems: 'center',
+     marginBottom: 30,
+  },
+  appIcon: {
+     width: 56,
+     height: 56,
+     backgroundColor: '#1E1B4B',
+     borderRadius: 16,
+     alignItems: 'center',
+     justifyContent: 'center',
+     shadowColor: '#000',
+     shadowOpacity: 0.1,
+     shadowOffset: { width: 0, height: 10 },
+     shadowRadius: 20,
+     elevation: 5,
+  },
+  appIconText: {
+     color: '#FA6EA0',
+     fontSize: 28,
+     fontWeight: '800',
+  },
+
+  hero: { marginBottom: 36, alignItems: 'center' },
+  heroTitle: { fontSize: 26, fontWeight: '800', color: '#1E1B4B', letterSpacing: -0.5, marginBottom: 8 },
+  heroSub: { fontSize: 13, color: '#64748B', textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 },
+
+  fieldGroup: { marginBottom: 16 },
+  fieldLabel: {
+    fontSize: 13, fontWeight: '700', color: '#1E1B4B',
+    marginBottom: 8, paddingLeft: 4,
+  },
+  inputWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 20, backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: '#F1F5F9',
+    paddingHorizontal: 16, height: 56,
+    shadowColor: '#1E1B4B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
+  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 14, fontWeight: '600', color: '#1E1B4B' },
+
+  optionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, marginTop: 4 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center' },
+  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: '#CBD5E1', marginRight: 8 },
+  rememberText: { fontSize: 13, color: '#64748B', fontWeight: '500' },
+  forgotText: { fontSize: 13, color: '#1E1B4B', fontWeight: '700' },
+
+  errorRow: { marginBottom: 12, alignItems: 'center' },
+  errorText: { fontSize: 12, fontWeight: '600', color: '#EF4444' },
+
+  btn: {
+    backgroundColor: '#1C1C28',
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1C1C28', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16,
+  },
+  btnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+
+  orContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
+  orLine: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+  orText: { textAlign: 'center', color: '#94A3B8', fontSize: 13, marginHorizontal: 16, fontWeight: '500' },
+
+  socialRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
+  socialBtn: {
+     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+     height: 52, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF',
+  },
+  socialBtnText: { fontSize: 14, fontWeight: '600', color: '#1E1B4B' },
+
+  footerText: {
+     marginTop: 40,
+     textAlign: 'center',
+     fontSize: 11,
+     fontWeight: '500',
+     color: '#94A3B8',
+     lineHeight: 18,
+  }
+});

@@ -1,144 +1,217 @@
-import { Redirect, useFocusEffect } from 'expo-router';
-import React, { useCallback } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { Redirect, useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapView, { Marker, Region } from 'react-native-maps';
+
 import { useAppHydration, useAppStore } from '@/stores/use-app-store';
 import { trackMapViewed } from '@/utils/analytics';
 
-const LEAFLET_HTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
-    #map { width: 100%; height: 100vh; }
-    .info { padding: 6px 8px; background: white; border-radius: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.2); font-size: 14px; line-height: 1.4; }
-    .info h4 { margin: 0 0 5px 0; color: #0f766e; font-weight: 600; }
-    .info-description { color: #475569; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <script>
-    const map = L.map('map').setView([20, 0], 2);
-    const markerLayer = L.layerGroup().addTo(map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+type MarkerPayload = {
+	id: string;
+	title: string;
+	description: string;
+	status: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+};
 
-    window.addTaskMarker = function(task) {
-      if (!task.location) return;
-      
-      const { latitude, longitude, address } = task.location;
-      const marker = L.marker([latitude, longitude]).addTo(markerLayer);
-      
-      const popupContent = \`
-        <div class="info">
-          <h4>\${task.title}</h4>
-          <div class="info-description">\${task.description || 'No description'}</div>
-          <div style="margin-top: 4px; font-size: 11px; color: #94a3b8;">
-            🎯 \${address}<br>
-            📊 \${task.status}
-          </div>
-        </div>
-      \`;
-      
-      marker.bindPopup(popupContent);
-    };
+const DEFAULT_REGION: Region = {
+	latitude: 20.5937,
+	longitude: 78.9629,
+	latitudeDelta: 12,
+	longitudeDelta: 12,
+};
 
-    window.updateMap = function(tasks) {
-      markerLayer.clearLayers();
-      const validTasks = tasks.filter(t => t && t.location && Number.isFinite(t.location.latitude) && Number.isFinite(t.location.longitude));
-      validTasks.forEach(task => window.addTaskMarker(task));
-      if (validTasks.length > 1) {
-        map.fitBounds(validTasks.map(t => [t.location.latitude, t.location.longitude]), { padding: [24, 24] });
-      } else if (validTasks.length === 1) {
-        map.setView([validTasks[0].location.latitude, validTasks[0].location.longitude], 14);
-      }
-    };
-  </script>
-</body>
-</html>
-`;
+const clampDelta = (value: number, fallback: number) => {
+	if (!Number.isFinite(value) || value <= 0) {
+		return fallback;
+	}
+
+	return Math.min(Math.max(value, 0.003), 35);
+};
 
 export default function MapScreen() {
-  const { hasHydrated } = useAppHydration();
-  const { tasks, isAuthenticated } = useAppStore();
-  const webViewRef = React.useRef<WebView>(null);
-  const [isMapReady, setIsMapReady] = React.useState(false);
+	const router = useRouter();
+	const { hasHydrated } = useAppHydration();
+	const { isAuthenticated, tasks } = useAppStore();
 
-  const tasksWithLocation = tasks.filter((task) => task.location);
+	const markers = useMemo(
+		() =>
+			tasks
+				.filter(
+					(task) =>
+						Boolean(task.location) &&
+						Number.isFinite(task.location?.latitude) &&
+						Number.isFinite(task.location?.longitude),
+				)
+				.map((task) => ({
+					id: task.id,
+					title: task.title,
+					description: task.description,
+					status: task.completed ? 'Completed' : 'Open',
+					address: task.location?.address ?? '',
+					latitude: task.location!.latitude,
+					longitude: task.location!.longitude,
+				})),
+		[tasks],
+	);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (tasksWithLocation.length > 0) {
-        trackMapViewed(tasksWithLocation.length);
-      }
-    }, [tasksWithLocation])
-  );
+	const initialRegion = useMemo<Region>(() => {
+		if (markers.length === 0) {
+			return DEFAULT_REGION;
+		}
 
-  const injectTasksIntoMap = React.useCallback(() => {
-    if (!webViewRef.current || !isMapReady) return;
-    const js = `window.updateMap && window.updateMap(${JSON.stringify(tasksWithLocation)}); true;`;
-    webViewRef.current.injectJavaScript(js);
-  }, [isMapReady, tasksWithLocation]);
+		if (markers.length === 1) {
+			return {
+				latitude: markers[0].latitude,
+				longitude: markers[0].longitude,
+				latitudeDelta: 0.08,
+				longitudeDelta: 0.08,
+			};
+		}
 
-  React.useEffect(() => {
-    injectTasksIntoMap();
-  }, [injectTasksIntoMap]);
+		const latitudes = markers.map((item) => item.latitude);
+		const longitudes = markers.map((item) => item.longitude);
 
-  if (!hasHydrated) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
-        <ActivityIndicator size="large" color="#0f766e" />
-        <Text className="mt-3 text-sm text-[#64748b]">Loading map...</Text>
-      </View>
-    );
-  }
+		const minLat = Math.min(...latitudes);
+		const maxLat = Math.max(...latitudes);
+		const minLng = Math.min(...longitudes);
+		const maxLng = Math.max(...longitudes);
 
-  if (!isAuthenticated) {
-    return <Redirect href="/login" />;
-  }
+		const centerLat = (minLat + maxLat) / 2;
+		const centerLng = (minLng + maxLng) / 2;
 
-  return (
-    <SafeAreaView className="flex-1 bg-[#f8fafc]">
-      <View className="border-b border-[#e2e8f0] px-4 py-3">
-        <Text className="text-2xl font-bold text-[#0f172a]">Task Map</Text>
-        <Text className="mt-1 text-sm text-[#64748b]">
-          {tasksWithLocation.length} task{tasksWithLocation.length !== 1 ? 's' : ''} with location
-        </Text>
-      </View>
+		return {
+			latitude: centerLat,
+			longitude: centerLng,
+			latitudeDelta: clampDelta((maxLat - minLat) * 1.5, 0.4),
+			longitudeDelta: clampDelta((maxLng - minLng) * 1.5, 0.4),
+		};
+	}, [markers]);
 
-      {tasksWithLocation.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-4">
-          <Text className="text-center text-base font-semibold text-[#0f172a]">No tasks with locations yet</Text>
-          <Text className="mt-2 text-center text-sm text-[#64748b]">
-            Add a location to your tasks to see them on the map
-          </Text>
-        </View>
-      ) : (
-        <WebView
-          ref={webViewRef}
-          source={{ html: LEAFLET_HTML }}
-          style={{ flex: 1 }}
-          onLoadEnd={() => setIsMapReady(true)}
-          startInLoadingState
-          renderLoading={() => (
-            <View className="flex-1 items-center justify-center bg-[#f8fafc]">
-              <ActivityIndicator size="large" color="#0f766e" />
-            </View>
-          )}
-          scrollEnabled={true}
-          scalesPageToFit
-        />
-      )}
-    </SafeAreaView>
-  );
+	useEffect(() => {
+		if (hasHydrated && isAuthenticated) {
+			trackMapViewed(markers.length);
+		}
+	}, [hasHydrated, isAuthenticated, markers.length]);
+
+	if (!hasHydrated && Platform.OS !== 'web') {
+		return (
+			<View style={styles.centered}>
+				<Text style={styles.helperText}>Loading map...</Text>
+			</View>
+		);
+	}
+
+	if (!isAuthenticated) {
+		return <Redirect href="/login" />;
+	}
+
+	return (
+		<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+			<View style={styles.container}>
+				<Text style={styles.title}>Task Locations</Text>
+				<Text style={styles.subtitle}>Showing {markers.length} location-tagged tasks</Text>
+
+				{markers.length === 0 ? (
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyTitle}>No mapped tasks yet</Text>
+						<Text style={styles.emptySubtitle}>Add location data to a task and it will appear here.</Text>
+					</View>
+				) : Platform.OS === 'web' ? (
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyTitle}>Map is available on Android/iOS builds</Text>
+						<Text style={styles.emptySubtitle}>Run on device/emulator to view interactive markers.</Text>
+					</View>
+				) : (
+					<View style={styles.mapCard}>
+						<MapView
+							style={styles.nativeMap}
+							initialRegion={initialRegion}
+							showsCompass
+							showsUserLocation={false}
+							toolbarEnabled
+							mapPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+							{markers.map((marker) => (
+								<Marker
+									key={marker.id}
+									coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
+									title={marker.title}
+									description={marker.description || marker.address || 'No details available'}
+									onPress={() => router.push(`/task/${marker.id}`)}
+								/>
+							))}
+						</MapView>
+					</View>
+				)}
+			</View>
+		</SafeAreaView>
+	);
 }
+
+const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#F8FAFC',
+	},
+	container: {
+		flex: 1,
+		paddingHorizontal: 16,
+		paddingTop: 8,
+		paddingBottom: 16,
+		backgroundColor: '#F8FAFC',
+	},
+	centered: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: '#F8FAFC',
+	},
+	helperText: {
+		color: '#334155',
+		fontSize: 14,
+	},
+	title: {
+		fontSize: 26,
+		fontWeight: '700',
+		color: '#0F172A',
+	},
+	subtitle: {
+		marginTop: 4,
+		marginBottom: 12,
+		color: '#475569',
+		fontSize: 14,
+	},
+	mapCard: {
+		flex: 1,
+		borderRadius: 14,
+		overflow: 'hidden',
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+		backgroundColor: '#FFFFFF',
+	},
+	nativeMap: {
+		flex: 1,
+		backgroundColor: '#FFFFFF',
+	},
+	emptyState: {
+		marginTop: 8,
+		borderRadius: 14,
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+		backgroundColor: '#FFFFFF',
+		padding: 16,
+		gap: 6,
+	},
+	emptyTitle: {
+		fontSize: 16,
+		fontWeight: '600',
+		color: '#0F172A',
+	},
+	emptySubtitle: {
+		fontSize: 13,
+		color: '#64748B',
+	},
+});

@@ -1,48 +1,50 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+	return (
+		<Tabs
+			screenOptions={{
+				headerShown: false,
+				tabBarButton: HapticTab,
+				tabBarActiveTintColor: '#1E1B4B',
+				tabBarInactiveTintColor: '#94A3B8',
+				tabBarStyle: {
+					borderTopColor: '#E2E8F0',
+					backgroundColor: '#FFFFFF',
+				},
+			}}>
+			<Tabs.Screen
+				name="index"
+				options={{
+					title: 'Tasks',
+					tabBarIcon: ({ color, size }) => (
+						<MaterialCommunityIcons name="format-list-checkbox" size={size} color={color} />
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="map"
+				options={{
+					title: 'Map',
+					tabBarIcon: ({ color, size }) => (
+						<MaterialCommunityIcons name="map-marker-outline" size={size} color={color} />
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="profile"
+				options={{
+					title: 'Profile',
+					tabBarIcon: ({ color, size }) => (
+						<MaterialCommunityIcons name="account-circle-outline" size={size} color={color} />
+					),
+				}}
+			/>
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Tasks',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="task/[id]"
-        options={{
-          href: null,
-        }}
-      />
-    </Tabs>
-  );
+			<Tabs.Screen name="task/[id]" options={{ href: null }} />
+		</Tabs>
+	);
 }
