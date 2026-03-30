@@ -2,6 +2,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState, useRef } from 'react';
 import {
   Animated,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -88,7 +89,11 @@ export default function LoginScreen() {
               {/* App Icon */}
               <View style={styles.iconContainer}>
                  <View style={styles.appIcon}>
-                    <Text style={styles.appIconText}>A</Text>
+                    <Image
+                     source={require('../assets/images/logo.png')}
+                     style={styles.appLogo}
+                     resizeMode="contain"
+                    />
                  </View>
               </View>
 
@@ -195,7 +200,7 @@ export default function LoginScreen() {
               </View>
               
               <Text style={styles.footerText}>
-                By tapping "Continue", you agree to our{"\n"}
+                By tapping Continue, you agree to our{"\n"}
                 <Text style={{fontWeight: '700', color: '#1E1B4B'}}>Privacy Policy & Terms of Service</Text>
               </Text>
 
@@ -218,22 +223,14 @@ const styles = StyleSheet.create({
      marginBottom: 30,
   },
   appIcon: {
-     width: 56,
-     height: 56,
-     backgroundColor: '#1E1B4B',
-     borderRadius: 16,
+      width: 50,
+      height: 150,
      alignItems: 'center',
      justifyContent: 'center',
-     shadowColor: '#000',
-     shadowOpacity: 0.1,
-     shadowOffset: { width: 0, height: 10 },
-     shadowRadius: 20,
-     elevation: 5,
   },
-  appIconText: {
-     color: '#FA6EA0',
-     fontSize: 28,
-     fontWeight: '800',
+    appLogo: {
+      width: '100%',
+      height: '100%',
   },
 
   hero: { marginBottom: 36, alignItems: 'center' },

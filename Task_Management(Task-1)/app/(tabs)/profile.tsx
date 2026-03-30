@@ -9,7 +9,7 @@ import { useAppHydration, useAppStore } from '@/stores/use-app-store';
 import { trackProfileViewed } from '@/utils/analytics';
 import { theme } from '@/constants/theme';
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEK_DAYS_COUNT = 7;
 
 function ProgressRing({ percentage }: { percentage: number }) {
   const clamped = Math.max(0, Math.min(100, percentage));
@@ -38,17 +38,21 @@ export default function ProfileScreen() {
     const completionRate = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
 
     const now = new Date();
-    const weeklyValues = DAYS.map((_, index) => {
+    const weeklyData = Array.from({ length: WEEK_DAYS_COUNT }, (_, index) => {
       const dayDate = new Date(now);
-      dayDate.setDate(now.getDate() - (6 - index));
+      dayDate.setDate(now.getDate() - (WEEK_DAYS_COUNT - 1 - index));
       const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()).getTime();
       const dayEnd = dayStart + 24 * 60 * 60 * 1000;
 
-      const count = tasks.filter((task) => {
+      const value = tasks.filter((task) => {
         const stamp = new Date(task.updatedAt || task.createdAt).getTime();
         return stamp >= dayStart && stamp < dayEnd;
       }).length;
-      return count;
+
+      return {
+        label: dayDate.toLocaleDateString(undefined, { weekday: 'short' }),
+        value,
+      };
     });
 
     return {
@@ -57,11 +61,11 @@ export default function ProfileScreen() {
       completed,
       reportsCompleted: fieldReports.length,
       completionRate,
-      weeklyValues,
+      weeklyData,
     };
   }, [tasks, fieldReports.length]);
 
-  const maxWeekly = Math.max(1, ...summary.weeklyValues);
+  const maxWeekly = Math.max(1, ...summary.weeklyData.map((item) => item.value));
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
@@ -131,12 +135,12 @@ export default function ProfileScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>This Week Activity</Text>
             <View style={styles.barChartWrap}>
-              {summary.weeklyValues.map((value, index) => (
-                <View key={DAYS[index]} style={styles.barColumn}>
+              {summary.weeklyData.map((item, index) => (
+                <View key={`${item.label}-${index}`} style={styles.barColumn}>
                   <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { height: `${(value / maxWeekly) * 100}%` }]} />
+                    <View style={[styles.barFill, { height: `${(item.value / maxWeekly) * 100}%` }]} />
                   </View>
-                  <Text style={styles.barLabel}>{DAYS[index]}</Text>
+                  <Text style={styles.barLabel}>{item.label}</Text>
                 </View>
               ))}
             </View>
