@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { theme } from '@/constants/theme';
 
 export default function TabLayout() {
 	return (
@@ -9,11 +10,11 @@ export default function TabLayout() {
 			screenOptions={{
 				headerShown: false,
 				tabBarButton: HapticTab,
-				tabBarActiveTintColor: '#1E1B4B',
-				tabBarInactiveTintColor: '#94A3B8',
+				tabBarActiveTintColor: theme.colors.primary,
+				tabBarInactiveTintColor: theme.colors.textMuted,
 				tabBarStyle: {
-					borderTopColor: '#E2E8F0',
-					backgroundColor: '#FFFFFF',
+					borderTopColor: theme.colors.border,
+					backgroundColor: theme.colors.surface,
 				},
 			}}>
 			<Tabs.Screen

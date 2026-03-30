@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -30,6 +31,7 @@ import {
   useAppStore,
 } from '@/stores/use-app-store';
 import { trackFieldReportCreated, trackFieldReportSynced } from '@/utils/analytics';
+import { theme } from '@/constants/theme';
 
 type Coordinates = {
   latitude: number;
@@ -37,6 +39,13 @@ type Coordinates = {
 };
 
 const TOTAL_STEPS = 5;
+const STEP_META = [
+  { label: 'Site', icon: 'map-marker-radius-outline' },
+  { label: 'Checklist', icon: 'format-list-checks' },
+  { label: 'Photos', icon: 'camera-outline' },
+  { label: 'Signature', icon: 'draw-pen' },
+  { label: 'Review', icon: 'clipboard-check-outline' },
+] as const;
 
 const createLeafletHtml = (latitude: number, longitude: number, draggable: boolean) => `
 <!DOCTYPE html>
@@ -570,15 +579,24 @@ export default function FieldReportScreen() {
   };
 
   const renderChecklistItem = (item: FieldReportDraft['checklist'][number]) => (
-    <View key={item.id} className="mb-3 rounded-lg border border-[#dbe4ee] bg-white p-3">
-      <Text className="text-sm font-semibold text-[#0f172a]">{item.label}</Text>
+    <View key={item.id} className="mb-3 rounded-2xl border border-[#e2e8f0] bg-white p-3.5">
+      <View className="flex-row items-center gap-2">
+        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#eef2ff]">
+          <MaterialCommunityIcons
+            name={item.status === 'pass' ? 'check' : item.status === 'fail' ? 'alert-circle-outline' : 'minus'}
+            size={14}
+            color={item.status === 'pass' ? '#166534' : item.status === 'fail' ? '#dc2626' : '#64748b'}
+          />
+        </View>
+        <Text className="text-sm font-semibold text-[#0f172a]">{item.label}</Text>
+      </View>
       <View className="mt-2 flex-row gap-2">
         {(['pass', 'fail', 'na'] as ChecklistStatus[]).map((status) => (
           <Pressable
             key={status}
             onPress={() => updateDraftChecklistItem(item.id, status, item.failReason ?? '')}
             className={`flex-1 items-center rounded-lg border px-2 py-2 ${
-              item.status === status ? 'border-[#0f766e] bg-[#0f766e]' : 'border-[#cbd5e1] bg-white'
+              item.status === status ? 'border-[#1e1b4b] bg-[#1e1b4b]' : 'border-[#cbd5e1] bg-white'
             }`}>
             <Text className={`text-xs font-semibold uppercase ${item.status === status ? 'text-white' : 'text-[#334155]'}`}>
               {status}
@@ -609,20 +627,36 @@ export default function FieldReportScreen() {
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
       className="flex-1 bg-[#f8fafc]">
-      <SafeAreaView className="flex-1 bg-[#f8fafc]">
+      <View className="flex-1">
+        <LinearGradient
+          colors={[theme.colors.gradientA, theme.colors.gradientB, theme.colors.gradientC]}
+          locations={[0, 0.45, 0.9]}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        />
+      <SafeAreaView className="flex-1 bg-transparent">
         <Stack.Screen options={{ title: 'Create Field Report' }} />
 
-        <View className="border-b border-[#e2e8f0] px-4 py-3">
-          <Text className="text-xl font-bold text-[#0f172a]">Create Field Report</Text>
+        <View className="mx-4 mt-2 rounded-3xl border border-[#eef2ff] bg-white px-4 py-4 shadow-sm">
+          <View className="flex-row items-center justify-between">
+            <View className="rounded-full bg-[#eef2ff] px-3 py-1">
+              <Text className="text-[11px] font-semibold uppercase tracking-wide text-[#1e1b4b]">Field Report</Text>
+            </View>
+            <View className={`rounded-full px-3 py-1 ${isOnline ? 'bg-[#dcfce7]' : 'bg-[#fee2e2]'}`}>
+              <Text className={`text-[11px] font-semibold ${isOnline ? 'text-[#166534]' : 'text-[#b91c1c]'}`}>
+                {isOnline ? 'Online' : 'Offline'}
+              </Text>
+            </View>
+          </View>
+          <Text className="mt-2 text-xl font-extrabold text-[#0f172a]">Create Field Report</Text>
           <Text className="mt-1 text-sm text-[#64748b]">Task: {task.title}</Text>
-          <View className="mt-2 flex-row items-center justify-between">
+          <View className="mt-3 flex-row items-center justify-between">
             <Text className={`text-xs font-semibold ${pendingReportsCount > 0 ? 'text-[#b45309]' : 'text-[#166534]'}`}>
               {pendingReportsCount > 0 ? `${pendingReportsCount} pending sync` : 'All reports synced'}
             </Text>
             <Pressable
               disabled={!isOnline || isSyncing}
               onPress={syncNow}
-              className={`rounded-md px-3 py-1.5 ${isOnline ? 'bg-[#0f766e]' : 'bg-[#94a3b8]'}`}>
+              className={`rounded-full px-3 py-1.5 ${isOnline ? 'bg-[#1e1b4b]' : 'bg-[#94a3b8]'}`}>
               <Text className="text-xs font-semibold text-white">{isSyncing ? 'Syncing...' : 'Sync Now'}</Text>
             </Pressable>
           </View>
@@ -633,10 +667,27 @@ export default function FieldReportScreen() {
             <Text className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">
               Step {draft.currentStep} of {TOTAL_STEPS}
             </Text>
-            <Text className="text-xs text-[#64748b]">{['Site', 'Checklist', 'Photos', 'Signature', 'Review'][draft.currentStep - 1]}</Text>
+            <View className="rounded-full bg-white/90 px-3 py-1">
+              <Text className="text-xs font-semibold text-[#1e1b4b]">{STEP_META[draft.currentStep - 1].label}</Text>
+            </View>
           </View>
           <View className="h-2 w-full overflow-hidden rounded-full bg-[#e2e8f0]">
-            <View className="h-full rounded-full bg-[#0f766e]" style={{ width: `${(draft.currentStep / TOTAL_STEPS) * 100}%` }} />
+            <View className="h-full rounded-full bg-[#1e1b4b]" style={{ width: `${(draft.currentStep / TOTAL_STEPS) * 100}%` }} />
+          </View>
+          <View className="mt-3 flex-row items-center justify-between">
+            {STEP_META.map((step, idx) => {
+              const stepIndex = idx + 1;
+              const isActive = draft.currentStep === stepIndex;
+              const isDone = draft.currentStep > stepIndex;
+              return (
+                <View key={step.label} className="items-center">
+                  <View className={`h-8 w-8 items-center justify-center rounded-full ${isDone ? 'bg-[#d1fae5]' : isActive ? 'bg-[#1e1b4b]' : 'bg-white'} border ${isDone ? 'border-[#86efac]' : isActive ? 'border-[#1e1b4b]' : 'border-[#e2e8f0]'}`}>
+                    <MaterialCommunityIcons name={step.icon as any} size={14} color={isDone ? '#166534' : isActive ? '#fff' : '#64748b'} />
+                  </View>
+                  <Text className={`mt-1 text-[10px] ${isActive ? 'font-semibold text-[#1e1b4b]' : 'text-[#64748b]'}`}>{step.label}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -647,8 +698,11 @@ export default function FieldReportScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 18 }}>
           {draft.currentStep === 1 ? (
             <>
-              <Text className="text-base font-semibold text-[#0f172a]">Step 1: Site Details</Text>
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="flex-row items-center gap-2">
+                <MaterialCommunityIcons name="map-marker-radius-outline" size={18} color="#1e1b4b" />
+                <Text className="text-base font-bold text-[#0f172a]">Step 1: Site Details</Text>
+              </View>
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="mb-1 text-xs font-semibold text-[#334155]">Site Name</Text>
                 <TextInput
                   value={draft.siteName}
@@ -681,10 +735,10 @@ export default function FieldReportScreen() {
                 {fieldErrors.contactPhone ? <Text className="mt-1 text-xs text-[#dc2626]">{fieldErrors.contactPhone}</Text> : null}
               </View>
 
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <View className="mb-2 flex-row items-center justify-between">
                   <Text className="text-xs font-semibold text-[#334155]">Location (drag marker to adjust)</Text>
-                  {(isResolvingAddress || isCapturingLocation) ? <ActivityIndicator size="small" color="#0f766e" /> : null}
+                  {(isResolvingAddress || isCapturingLocation) ? <ActivityIndicator size="small" color="#1e1b4b" /> : null}
                 </View>
                 {draft.location ? (
                   <View className="h-[180px] overflow-hidden rounded-lg border border-[#dbe4ee]">
@@ -719,11 +773,14 @@ export default function FieldReportScreen() {
 
           {draft.currentStep === 2 ? (
             <>
-              <Text className="text-base font-semibold text-[#0f172a]">Step 2: Checklist & Observations</Text>
+              <View className="flex-row items-center gap-2">
+                <MaterialCommunityIcons name="format-list-checks" size={18} color="#1e1b4b" />
+                <Text className="text-base font-bold text-[#0f172a]">Step 2: Checklist & Observations</Text>
+              </View>
               <Text className="mt-1 text-sm text-[#64748b]">Mark each checklist item as Pass, Fail, or N/A.</Text>
               <View className="mt-3">{draft.checklist.map((item) => renderChecklistItem(item))}</View>
 
-              <View className="rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <View className="mb-1 flex-row items-center justify-between">
                   <Text className="text-xs font-semibold text-[#334155]">Observations</Text>
                   <Pressable
@@ -750,14 +807,17 @@ export default function FieldReportScreen() {
 
           {draft.currentStep === 3 ? (
             <>
-              <Text className="text-base font-semibold text-[#0f172a]">Step 3: Photo Evidence</Text>
+              <View className="flex-row items-center gap-2">
+                <MaterialCommunityIcons name="camera-outline" size={18} color="#1e1b4b" />
+                <Text className="text-base font-bold text-[#0f172a]">Step 3: Photo Evidence</Text>
+              </View>
               <Text className="mt-1 text-sm text-[#64748b]">Add up to 5 photos with captions and watermark metadata.</Text>
               <View className="mt-3 flex-row gap-2">
-                <Pressable onPress={() => void addPhoto('camera')} className="flex-1 items-center rounded-lg bg-[#0f766e] py-2.5">
+                <Pressable onPress={() => void addPhoto('camera')} className="flex-1 items-center rounded-xl bg-[#1e1b4b] py-2.5">
                   <Text className="text-sm font-semibold text-white">Camera</Text>
                 </Pressable>
-                <Pressable onPress={() => void addPhoto('gallery')} className="flex-1 items-center rounded-lg border border-[#0f766e] py-2.5">
-                  <Text className="text-sm font-semibold text-[#0f766e]">Gallery</Text>
+                <Pressable onPress={() => void addPhoto('gallery')} className="flex-1 items-center rounded-xl border border-[#1e1b4b] py-2.5 bg-white">
+                  <Text className="text-sm font-semibold text-[#1e1b4b]">Gallery</Text>
                 </Pressable>
               </View>
 
@@ -766,7 +826,7 @@ export default function FieldReportScreen() {
 
               <View className="mt-3 flex-row flex-wrap justify-between">
                 {draft.photos.map((photo: FieldReportPhoto) => (
-                  <View key={photo.id} className="mb-3 w-[48%] rounded-lg border border-[#dbe4ee] bg-white p-2">
+                  <View key={photo.id} className="mb-3 w-[48%] rounded-2xl border border-[#dbe4ee] bg-white p-2.5">
                     <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 110, borderRadius: 8 }} />
                     <TextInput
                       value={photo.caption}
@@ -785,8 +845,8 @@ export default function FieldReportScreen() {
                           removeDraftPhoto(photo.id);
                           void addPhoto('camera');
                         }}
-                        className="flex-1 items-center rounded-md border border-[#0f766e] py-1.5">
-                        <Text className="text-xs font-semibold text-[#0f766e]">Retake</Text>
+                        className="flex-1 items-center rounded-md border border-[#1e1b4b] py-1.5">
+                        <Text className="text-xs font-semibold text-[#1e1b4b]">Retake</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -797,8 +857,11 @@ export default function FieldReportScreen() {
 
           {draft.currentStep === 4 ? (
             <>
-              <Text className="text-base font-semibold text-[#0f172a]">Step 4: Customer Signature</Text>
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="flex-row items-center gap-2">
+                <MaterialCommunityIcons name="draw-pen" size={18} color="#1e1b4b" />
+                <Text className="text-base font-bold text-[#0f172a]">Step 4: Customer Signature</Text>
+              </View>
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="mb-1 text-xs font-semibold text-[#334155]">Customer Name</Text>
                 <TextInput
                   value={draft.customerName}
@@ -850,9 +913,12 @@ export default function FieldReportScreen() {
 
           {draft.currentStep === 5 ? (
             <>
-              <Text className="text-base font-semibold text-[#0f172a]">Step 5: Review & Submit</Text>
+              <View className="flex-row items-center gap-2">
+                <MaterialCommunityIcons name="clipboard-check-outline" size={18} color="#1e1b4b" />
+                <Text className="text-base font-bold text-[#0f172a]">Step 5: Review & Submit</Text>
+              </View>
 
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="text-sm font-semibold text-[#0f172a]">Site Details</Text>
                 <Text className="mt-1 text-xs text-[#334155]">Site: {draft.siteName}</Text>
                 <Text className="mt-1 text-xs text-[#334155]">Contact: {draft.contactPersonName} ({draft.contactPhone})</Text>
@@ -863,7 +929,7 @@ export default function FieldReportScreen() {
                 ) : null}
               </View>
 
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="text-sm font-semibold text-[#0f172a]">Checklist</Text>
                 {draft.checklist.map((item) => (
                   <Text key={item.id} className="mt-1 text-xs text-[#334155]">
@@ -873,7 +939,7 @@ export default function FieldReportScreen() {
                 <Text className="mt-2 text-xs text-[#334155]">Observations: {draft.observations || 'None'}</Text>
               </View>
 
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="text-sm font-semibold text-[#0f172a]">Photo Evidence</Text>
                 <View className="mt-2 flex-row flex-wrap justify-between">
                   {draft.photos.map((photo) => (
@@ -882,7 +948,7 @@ export default function FieldReportScreen() {
                 </View>
               </View>
 
-              <View className="mt-3 rounded-xl border border-[#dbe4ee] bg-white p-3">
+              <View className="mt-3 rounded-2xl border border-[#dbe4ee] bg-white p-4">
                 <Text className="text-sm font-semibold text-[#0f172a]">Customer Signature</Text>
                 <Text className="mt-1 text-xs text-[#334155]">{draft.customerName}</Text>
                 {draft.signatureBase64 ? (
@@ -895,13 +961,13 @@ export default function FieldReportScreen() {
           ) : null}
         </ScrollView>
 
-        <View className="flex-row gap-3 border-t border-[#e2e8f0] bg-white px-4 py-3">
-          <Pressable onPress={handleBack} className="flex-1 items-center rounded-lg border border-[#cbd5e1] py-3">
+        <View className="mx-4 mb-3 mt-1 flex-row gap-3 rounded-2xl border border-[#e2e8f0] bg-white p-3">
+          <Pressable onPress={handleBack} className="flex-1 items-center rounded-xl border border-[#cbd5e1] py-3">
             <Text className="text-sm font-semibold text-[#334155]">Back</Text>
           </Pressable>
           <Pressable
             onPress={draft.currentStep === 5 ? submitReport : handleNext}
-            className="flex-1 items-center rounded-lg bg-[#0f766e] py-3">
+            className="flex-1 items-center rounded-xl bg-[#1e1b4b] py-3">
             <Text className="text-sm font-semibold text-white">{draft.currentStep === 5 ? 'Submit Report' : 'Next'}</Text>
           </Pressable>
         </View>
@@ -941,6 +1007,7 @@ export default function FieldReportScreen() {
           </View>
         ) : null}
       </SafeAreaView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
