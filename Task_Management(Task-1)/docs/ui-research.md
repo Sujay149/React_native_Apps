@@ -41,8 +41,7 @@ Real app example:
 ## 3. Micro-interactions
 
 What I learned:
-- Press feedback should be immediate (opacity, scale, ripple/haptic where available).
-- Skeleton loaders are more reassuring than isolated spinners because users see expected layout structure.
+
 - Lightweight transition animation (fade/slide) improves perceived polish for screen navigation.
 - Toast/snackbar is preferred for non-blocking success states; alerts are best for destructive confirmations.
 - Haptic cues should be used sparingly for completion, confirmation, and destructive actions.
