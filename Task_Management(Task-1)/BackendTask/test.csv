@@ -1,0 +1,4 @@
+name,email,password,role,status
+Asha,asha101@example.com,pass123,USER,ACTIVE
+BadRow,badmail@example.com,pass456,ADMIN,ACTIVE
+Meena,meena101@example.com,pass123,SELLER,ACTIVE

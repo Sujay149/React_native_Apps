@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BackendTask API Tester</title>
+  <style>
+    :root {
+      --bg-1: #f4f8ff;
+      --bg-2: #fffdf7;
+      --panel: #ffffff;
+      --ink: #173046;
+      --muted: #5a7285;
+      --accent: #007f7a;
+      --accent-2: #f08c00;
+      --danger: #cc3344;
+      --ok: #157347;
+      --border: #d6e2eb;
+      --shadow: 0 10px 30px rgba(23, 48, 70, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif;
+      background:
+        radial-gradient(1300px 700px at 10% -10%, #d9f6f1 0%, transparent 45%),
+        radial-gradient(1000px 550px at 120% 0%, #ffe8bf 0%, transparent 40%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      animation: fadeIn 450ms ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .hero {
+      background: linear-gradient(130deg, #ffffff, #f8fff8);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.8rem;
+      letter-spacing: 0.3px;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .base-row {
+      display: grid;
+      grid-template-columns: 170px 1fr auto;
+      gap: 10px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      animation: lift 280ms ease-out;
+    }
+
+    @keyframes lift {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.85rem;
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 9px 12px;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    button.warn {
+      background: var(--accent-2);
+      color: #13202b;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    .status {
+      margin-top: 12px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .status-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .pill.ok { background: #dbf6e5; color: var(--ok); }
+    .pill.err { background: #ffe3e7; color: var(--danger); }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      background: #0f2031;
+      color: #eaf2f8;
+      min-height: 170px;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 760px) {
+      .base-row {
+        grid-template-columns: 1fr;
+      }
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>BackendTask API Tester</h1>
+      <p class="hint">Quick browser UI to test user, file, CSV, user-file, and user-role APIs.</p>
+      <div class="base-row">
+        <label for="baseUrl">Base URL</label>
+        <input id="baseUrl" value="http://localhost:8080">
+        <button id="pingBtn" type="button" class="warn">Ping /users</button>
+      </div>
+      <div class="base-row">
+        <label for="authToken">JWT Token</label>
+        <input id="authToken" placeholder="Bearer token is auto-filled after login">
+        <button id="clearTokenBtn" type="button" class="danger">Clear Token</button>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Authentication</h2>
+        <div class="row">
+          <div><label>Signup Name</label><input id="sName" value="Auth User"></div>
+          <div><label>Signup Email</label><input id="sEmail" value="auth@example.com"></div>
+        </div>
+        <div class="row">
+          <div><label>Phone</label><input id="sPhone" value="9999999999"></div>
+          <div><label>Password</label><input id="sPassword" value="12345"></div>
+        </div>
+        <div class="row">
+          <div><label>Login Email</label><input id="lEmail" value="auth@example.com"></div>
+          <div><label>Login Password</label><input id="lPassword" value="12345"></div>
+        </div>
+        <div class="btns">
+          <button id="signupBtn" type="button">Signup</button>
+          <button id="loginBtn" type="button" class="warn">Login</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Users</h2>
+        <div class="row">
+          <div><label>Name</label><input id="uName" value="Ravi"></div>
+          <div><label>Email</label><input id="uEmail" value="ravi.ui@example.com"></div>
+        </div>
+        <div class="row">
+          <div><label>Password</label><input id="uPassword" value="12345"></div>
+          <div><label>Role</label>
+            <select id="uRole">
+              <option>USER</option>
+              <option>ADMIN</option>
+              <option>SELLER</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>Status</label>
+            <select id="uStatus">
+              <option>ACTIVE</option>
+              <option>INACTIVE</option>
+              <option>SUSPENDED</option>
+              <option>PENDING</option>
+            </select>
+          </div>
+          <div><label>User ID</label><input id="userId" placeholder="set from response"></div>
+        </div>
+        <div class="btns">
+          <button id="createUserBtn" type="button">Create User</button>
+          <button id="getUserBtn" type="button">Get User</button>
+          <button id="getUsersBtn" type="button" class="warn">Get All Users</button>
+          <button id="getUsersWithFilesBtn" type="button" class="warn">Users + Files</button>
+          <button id="deleteUserBtn" type="button" class="danger">Delete User</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Files</h2>
+        <div class="row">
+          <div><label>Single File</label><input id="singleFile" type="file"></div>
+          <div><label>Multiple Files</label><input id="multiFiles" type="file" multiple></div>
+        </div>
+        <div class="row">
+          <div><label>File ID</label><input id="fileId" placeholder="set from response"></div>
+          <div><label>uploadedBy</label><input id="uploadedBy" placeholder="defaults to User ID"></div>
+        </div>
+        <div class="btns">
+          <button id="uploadSingleBtn" type="button">Upload Single</button>
+          <button id="uploadMultiBtn" type="button">Upload Multiple</button>
+          <button id="getAllFilesBtn" type="button" class="warn">Get All Files</button>
+          <button id="downloadFileBtn" type="button" class="warn">Download</button>
+          <button id="deleteFileBtn" type="button" class="danger">Delete File</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>CSV Bulk Users</h2>
+        <div><label>CSV File</label><input id="csvFile" type="file" accept=".csv,text/csv"></div>
+        <p class="small">Expected columns: name,email,password,role,status</p>
+        <div class="btns">
+          <button id="uploadCsvBtn" type="button">Upload CSV</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>User-File Mapping</h2>
+        <div class="row">
+          <div><label>User ID</label><input id="mapUserId"></div>
+          <div><label>File ID</label><input id="mapFileId"></div>
+        </div>
+        <div><label>Tag</label><input id="mapTag" value="invoice"></div>
+        <div class="btns">
+          <button id="attachFileBtn" type="button">Attach</button>
+          <button id="getUserFilesBtn" type="button" class="warn">Get User Files</button>
+          <button id="removeFileBtn" type="button" class="danger">Remove</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>User-Role Mapping</h2>
+        <div class="row">
+          <div><label>User ID</label><input id="roleUserId"></div>
+          <div><label>Role ID</label><input id="roleId" value="1"></div>
+        </div>
+        <div class="btns">
+          <button id="assignRoleBtn" type="button">Assign Role</button>
+          <button id="getRolesBtn" type="button" class="warn">Get Roles</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="status">
+      <div class="status-head">
+        <div id="statusText">No request yet.</div>
+        <div id="statusPill" class="pill">idle</div>
+      </div>
+      <pre id="responseBox">{}</pre>
+    </section>
+  </div>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+
+    const statusText = el("statusText");
+    const statusPill = el("statusPill");
+    const responseBox = el("responseBox");
+
+    function base() {
+      return el("baseUrl").value.trim().replace(/\/$/, "");
+    }
+
+    function setStatus(code, label) {
+      statusText.textContent = label;
+      statusPill.textContent = code;
+      statusPill.className = "pill " + ((code >= 200 && code < 300) ? "ok" : "err");
+    }
+
+    async function showResponse(res, bodyText) {
+      setStatus(res.status, res.status + " " + res.statusText);
+      let pretty = bodyText;
+      try {
+        pretty = JSON.stringify(JSON.parse(bodyText), null, 2);
+      } catch (e) {
+        // Keep raw response when not JSON.
+      }
+      responseBox.textContent = pretty || "<empty response>";
+    }
+
+    function syncIds(userId, fileId) {
+      if (userId) {
+        el("userId").value = userId;
+        el("uploadedBy").value = userId;
+        el("mapUserId").value = userId;
+        el("roleUserId").value = userId;
+      }
+      if (fileId) {
+        el("fileId").value = fileId;
+        el("mapFileId").value = fileId;
+      }
+    }
+
+    async function send(path, options, label) {
+      const method = (options && options.method) ? options.method : "GET";
+      statusText.textContent = "Loading " + method + " " + path + " ...";
+      statusPill.textContent = "...";
+      statusPill.className = "pill";
+      const requestOptions = options ? { ...options } : {};
+      requestOptions.headers = requestOptions.headers ? { ...requestOptions.headers } : {};
+
+      const token = el("authToken").value.trim();
+      const isAuthEndpoint = path.startsWith("/auth/");
+      if (token && !isAuthEndpoint) {
+        requestOptions.headers["Authorization"] = "Bearer " + token;
+      }
+
+      const res = await fetch(base() + path, requestOptions);
+      const txt = await res.text();
+      await showResponse(res, txt);
+      statusText.textContent = method + " " + path + " -> " + res.status + " " + res.statusText;
+      return { res, txt };
+    }
+
+    el("pingBtn").addEventListener("click", async () => {
+      await send("/users", { method: "GET" }, "Ping");
+    });
+
+    el("clearTokenBtn").addEventListener("click", () => {
+      el("authToken").value = "";
+      statusText.textContent = "JWT token cleared";
+      statusPill.textContent = "idle";
+      statusPill.className = "pill";
+    });
+
+    el("signupBtn").addEventListener("click", async () => {
+      const payload = {
+        name: el("sName").value,
+        email: el("sEmail").value,
+        phone: el("sPhone").value,
+        password: el("sPassword").value
+      };
+
+      const { txt } = await send("/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      try {
+        const data = JSON.parse(txt);
+        syncIds(data.id, null);
+      } catch (e) {
+        // Ignore parse failures here.
+      }
+    });
+
+    el("loginBtn").addEventListener("click", async () => {
+      const payload = {
+        email: el("lEmail").value,
+        password: el("lPassword").value
+      };
+
+      const { txt } = await send("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      try {
+        const data = JSON.parse(txt);
+        if (data.accessToken) {
+          el("authToken").value = data.accessToken;
+        }
+      } catch (e) {
+        // Ignore parse failures here.
+      }
+    });
+
+    el("createUserBtn").addEventListener("click", async () => {
+      const payload = {
+        name: el("uName").value,
+        email: el("uEmail").value,
+        password: el("uPassword").value,
+        role: el("uRole").value,
+        status: el("uStatus").value
+      };
+      const { txt } = await send("/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      try {
+        const data = JSON.parse(txt);
+        syncIds(data.id, null);
+      } catch (e) {
+        // Ignore parse failures here.
+      }
+    });
+
+    el("getUserBtn").addEventListener("click", async () => {
+      const userId = el("userId").value.trim();
+      if (!userId) return alert("Enter User ID");
+      await send("/users/" + userId, { method: "GET" });
+    });
+
+    el("getUsersBtn").addEventListener("click", async () => {
+      await send("/users", { method: "GET" });
+    });
+
+    el("getUsersWithFilesBtn").addEventListener("click", async () => {
+      await send("/users/with-files", { method: "GET" });
+    });
+
+    el("deleteUserBtn").addEventListener("click", async () => {
+      const userId = el("userId").value.trim();
+      if (!userId) return alert("Enter User ID");
+      await send("/users/" + userId, { method: "DELETE" });
+    });
+
+    el("uploadSingleBtn").addEventListener("click", async () => {
+      const file = el("singleFile").files[0];
+      const uploadedBy = el("uploadedBy").value.trim() || el("userId").value.trim();
+      if (!file) return alert("Choose a file");
+      if (!uploadedBy) return alert("Provide uploadedBy or User ID");
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("uploadedBy", uploadedBy);
+
+      const { txt } = await send("/files/upload", { method: "POST", body: fd });
+      try {
+        const data = JSON.parse(txt);
+        syncIds(null, data.id);
+      } catch (e) {
+        // Ignore parse failures here.
+      }
+    });
+
+    el("uploadMultiBtn").addEventListener("click", async () => {
+      const files = el("multiFiles").files;
+      const uploadedBy = el("uploadedBy").value.trim() || el("userId").value.trim();
+      if (!files.length) return alert("Choose at least one file");
+      if (!uploadedBy) return alert("Provide uploadedBy or User ID");
+
+      const fd = new FormData();
+      for (const f of files) {
+        fd.append("files", f);
+      }
+      fd.append("uploadedBy", uploadedBy);
+      await send("/files/upload-multiple", { method: "POST", body: fd });
+    });
+
+    el("getAllFilesBtn").addEventListener("click", async () => {
+      const { res, txt } = await send("/users/with-files", { method: "GET" });
+      if (!res.ok) return;
+
+      try {
+        const users = JSON.parse(txt);
+        const allFiles = users.flatMap((user) =>
+          (user.files || []).map((file) => ({
+            userId: user.id,
+            userName: user.name,
+            fileId: file.id,
+            fileName: file.fileName,
+            fileType: file.fileType,
+            fileSize: file.fileSize,
+            storagePath: file.storagePath,
+            uploadedBy: file.uploadedBy,
+            createdAt: file.createdAt
+          }))
+        );
+        responseBox.textContent = JSON.stringify(allFiles, null, 2);
+      } catch (e) {
+        // Keep default output if parsing fails.
+      }
+    });
+
+    el("downloadFileBtn").addEventListener("click", async () => {
+      const fileId = el("fileId").value.trim();
+      if (!fileId) return alert("Enter File ID");
+      const res = await fetch(base() + "/files/" + fileId);
+      if (!res.ok) {
+        const txt = await res.text();
+        await showResponse(res, txt);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "downloaded_file";
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus(res.status, "Downloaded file");
+      responseBox.textContent = "Binary download completed.";
+    });
+
+    el("deleteFileBtn").addEventListener("click", async () => {
+      const fileId = el("fileId").value.trim();
+      if (!fileId) return alert("Enter File ID");
+      await send("/files/" + fileId, { method: "DELETE" });
+    });
+
+    el("uploadCsvBtn").addEventListener("click", async () => {
+      const file = el("csvFile").files[0];
+      if (!file) return alert("Choose a CSV file");
+      const fd = new FormData();
+      fd.append("file", file);
+      await send("/users/upload-csv", { method: "POST", body: fd });
+    });
+
+    el("attachFileBtn").addEventListener("click", async () => {
+      const userId = el("mapUserId").value.trim();
+      const fileId = el("mapFileId").value.trim();
+      const tag = encodeURIComponent(el("mapTag").value.trim());
+      if (!userId || !fileId) return alert("Need User ID and File ID");
+      if (!/^\d+$/.test(userId) || !/^\d+$/.test(fileId)) return alert("User ID and File ID must be numeric");
+      await send("/users/" + userId + "/files/" + fileId + "?tag=" + tag, { method: "POST" });
+    });
+
+    el("getUserFilesBtn").addEventListener("click", async () => {
+      const userId = el("mapUserId").value.trim();
+      if (!userId) return alert("Need User ID");
+      if (!/^\d+$/.test(userId)) return alert("User ID must be numeric");
+      await send("/users/" + userId + "/files", { method: "GET" });
+    });
+
+    el("removeFileBtn").addEventListener("click", async () => {
+      const userId = el("mapUserId").value.trim();
+      const fileId = el("mapFileId").value.trim();
+      if (!userId || !fileId) return alert("Need User ID and File ID");
+      if (!/^\d+$/.test(userId) || !/^\d+$/.test(fileId)) return alert("User ID and File ID must be numeric");
+      await send("/users/" + userId + "/files/" + fileId, { method: "DELETE" });
+    });
+
+    el("assignRoleBtn").addEventListener("click", async () => {
+      const userId = el("roleUserId").value.trim();
+      const roleId = el("roleId").value.trim();
+      if (!userId || !roleId) return alert("Need User ID and Role ID");
+      if (!/^\d+$/.test(userId) || !/^\d+$/.test(roleId)) return alert("User ID and Role ID must be numeric");
+      await send("/users/" + userId + "/roles/" + roleId, { method: "POST" });
+    });
+
+    el("getRolesBtn").addEventListener("click", async () => {
+      const userId = el("roleUserId").value.trim();
+      if (!userId) return alert("Need User ID");
+      if (!/^\d+$/.test(userId)) return alert("User ID must be numeric");
+      await send("/users/" + userId + "/roles", { method: "GET" });
+    });
+  </script>
+</body>
+</html>
