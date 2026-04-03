@@ -18,9 +18,19 @@ public class UserMapper {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
+        dto.setEmployeeId(user.getEmployeeId());
+        dto.setAge(user.getAge());
+        dto.setGender(user.getGender());
+        dto.setCategory(user.getCategory());
+        dto.setParentUserId(user.getParentUserId());
+        dto.setVillage(user.getVillage());
+        dto.setMandal(user.getMandal());
+        dto.setDistrict(user.getDistrict());
+        dto.setState(user.getState());
         dto.setRole(user.getRole());
         dto.setStatus(user.getStatus());
         dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
 
         return dto;
     }

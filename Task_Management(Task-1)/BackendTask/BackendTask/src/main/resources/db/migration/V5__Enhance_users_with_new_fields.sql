@@ -8,6 +8,7 @@ ALTER TABLE users ADD COLUMN village VARCHAR(100);
 ALTER TABLE users ADD COLUMN mandal VARCHAR(100);
 ALTER TABLE users ADD COLUMN district VARCHAR(100);
 ALTER TABLE users ADD COLUMN state VARCHAR(100);
+ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
 -- Create indexes for better query performance
 CREATE INDEX idx_employee_id ON users(employee_id);

@@ -30,6 +30,11 @@ export default function RootLayout() {
           <Stack.Screen name="task/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="task/field-report" options={{ headerShown: false }} />
           <Stack.Screen name="task/report/[reportId]" options={{ headerShown: false }} />
+          <Stack.Screen name="modules/homecare" options={{ headerShown: false }} />
+          <Stack.Screen name="modules/health" options={{ headerShown: false }} />
+          <Stack.Screen name="modules/security" options={{ headerShown: false }} />
+          <Stack.Screen name="modules/marketing" options={{ headerShown: false }} />
+          <Stack.Screen name="modules/education" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="dark" backgroundColor="#F8F9FF" />
       </ThemeProvider>

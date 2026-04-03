@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Animated,
   Image,
@@ -52,9 +52,9 @@ export default function LoginScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Fade-in on mount
-  useRef(
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true, delay: 100 }).start()
-  );
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true, delay: 100 }).start();
+  }, [fadeAnim]);
 
   const validateEmail = (value: string) => /.+@.+\..+/.test(value);
 

@@ -76,13 +76,18 @@ public class AuthServiceImpl implements AuthService {
     public AuthTokenResponseDTO login(AuthLoginRequestDTO request) {
         validateLoginRequest(request);
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadRequestException("Invalid email or password"));
+        User user;
+        String loginInput = request.getEmail().trim();
+
+        // Try to find by email first, then by employee ID
+        user = userRepository.findByEmail(loginInput)
+                .orElseGet(() -> userRepository.findByEmployeeId(loginInput)
+                        .orElseThrow(() -> new BadRequestException("Invalid email/employee ID or password")));
 
         boolean validHashed = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
         boolean validLegacy = request.getPassword().equals(user.getPasswordHash());
         if (!validHashed && !validLegacy) {
-            throw new BadRequestException("Invalid email or password");
+            throw new BadRequestException("Invalid email/employee ID or password");
         }
 
         if (validLegacy) {
