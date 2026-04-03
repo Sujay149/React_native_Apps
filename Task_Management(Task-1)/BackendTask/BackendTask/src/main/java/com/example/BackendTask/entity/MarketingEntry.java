@@ -13,39 +13,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "marketing_entries")
+public class MarketingEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
     @Column(nullable = false, length = 100)
-    private String name;
+    private String prospectName;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(unique = true, length = 20)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
-
-    @Column(unique = true, length = 50)
-    private String employeeId;
-
-    @Column
-    private Integer age;
-
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    @Column(length = 20)
+    private String contactNumber;
 
     @Column(length = 100)
-    private String category; // Home Care, Marketing, Security, Health, Education
-
-    @Column(name = "parent_user_id")
-    private Long parentUserId; // For hierarchical structure
+    private String productService;
 
     @Column(length = 100)
     private String village;
@@ -60,10 +46,14 @@ public class User {
     private String state;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private LeadStatus leadStatus;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ApprovalStatus approvalStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +65,12 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (leadStatus == null) {
+            leadStatus = LeadStatus.MEDIUM;
+        }
+        if (approvalStatus == null) {
+            approvalStatus = ApprovalStatus.PENDING;
+        }
     }
 
     @PreUpdate

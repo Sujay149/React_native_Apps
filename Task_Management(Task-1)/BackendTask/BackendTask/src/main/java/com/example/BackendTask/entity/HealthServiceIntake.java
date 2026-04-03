@@ -13,39 +13,34 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "health_service_intakes")
+public class HealthServiceIntake {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
     @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(unique = true, length = 20)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
-
-    @Column(unique = true, length = 50)
-    private String employeeId;
+    private String patientName;
 
     @Column
     private Integer age;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    @Column(length = 20)
+    private String contactNumber;
+
+    @Column(length = 1000)
+    private String problemDescription;
 
     @Column(length = 100)
-    private String category; // Home Care, Marketing, Security, Health, Education
+    private String hospitalName;
 
-    @Column(name = "parent_user_id")
-    private Long parentUserId; // For hierarchical structure
+    @Column(length = 100)
+    private String doctorName;
 
     @Column(length = 100)
     private String village;
@@ -60,10 +55,7 @@ public class User {
     private String state;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private ServiceModuleStatus status;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +67,9 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = ServiceModuleStatus.OPEN;
+        }
     }
 
     @PreUpdate

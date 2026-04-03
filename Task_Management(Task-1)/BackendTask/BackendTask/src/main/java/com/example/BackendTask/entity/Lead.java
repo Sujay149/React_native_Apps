@@ -13,39 +13,34 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "leads")
+public class Lead {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(unique = true, length = 20)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
-
-    @Column(unique = true, length = 50)
-    private String employeeId;
-
-    @Column
-    private Integer age;
-
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    @Column(length = 20)
+    private String contactNumber;
 
     @Column(length = 100)
-    private String category; // Home Care, Marketing, Security, Health, Education
+    private String email;
 
-    @Column(name = "parent_user_id")
-    private Long parentUserId; // For hierarchical structure
+    @Column(length = 100)
+    private String category; // Home Care, Marketing, etc
+
+    @Enumerated(EnumType.STRING)
+    private LeadStatus leadStatus;
+
+    @Column(length = 255)
+    private String location;
 
     @Column(length = 100)
     private String village;
@@ -59,11 +54,18 @@ public class User {
     @Column(length = 100)
     private String state;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(length = 1000)
+    private String notes;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ApprovalStatus approvalStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
+
+    @Column(name = "approval_date")
+    private LocalDateTime approvalDate;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +77,12 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (leadStatus == null) {
+            leadStatus = LeadStatus.MEDIUM;
+        }
+        if (approvalStatus == null) {
+            approvalStatus = ApprovalStatus.PENDING;
+        }
     }
 
     @PreUpdate

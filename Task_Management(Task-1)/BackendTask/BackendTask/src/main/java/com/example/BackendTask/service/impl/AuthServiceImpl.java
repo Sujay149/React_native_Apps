@@ -7,6 +7,7 @@ import com.example.BackendTask.dto.UserResponseDTO;
 import com.example.BackendTask.entity.Role;
 import com.example.BackendTask.entity.Status;
 import com.example.BackendTask.entity.User;
+import com.example.BackendTask.entity.Gender;
 import com.example.BackendTask.exception.BadRequestException;
 import com.example.BackendTask.mapper.UserMapper;
 import com.example.BackendTask.repository.UserRepository;
@@ -45,12 +46,25 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new BadRequestException("Phone already exists");
         }
+        if (request.getEmployeeId() != null && userRepository.existsByEmployeeId(request.getEmployeeId())) {
+            throw new BadRequestException("Employee ID already exists");
+        }
 
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setEmployeeId(request.getEmployeeId());
+        user.setAge(request.getAge());
+        if (request.getGender() != null) {
+            user.setGender(Gender.valueOf(request.getGender().toUpperCase()));
+        }
+        user.setCategory(request.getCategory());
+        user.setVillage(request.getVillage());
+        user.setMandal(request.getMandal());
+        user.setDistrict(request.getDistrict());
+        user.setState(request.getState());
         user.setRole(Role.USER);
         user.setStatus(Status.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
@@ -96,11 +110,11 @@ public class AuthServiceImpl implements AuthService {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new BadRequestException("Password is required");
         }
-        if (request.getName().length() > 20) {
-            throw new BadRequestException("Name must be at most 20 characters");
+        if (request.getName().length() > 100) {
+            throw new BadRequestException("Name must be at most 100 characters");
         }
-        if (request.getEmail().length() > 30) {
-            throw new BadRequestException("Email must be at most 30 characters");
+        if (request.getEmail().length() > 100) {
+            throw new BadRequestException("Email must be at most 100 characters");
         }
         if (request.getPhone().length() > 20) {
             throw new BadRequestException("Phone must be at most 20 characters");

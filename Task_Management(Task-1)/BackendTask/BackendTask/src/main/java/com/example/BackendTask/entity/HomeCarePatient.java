@@ -7,45 +7,35 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "home_care_patients")
+public class HomeCarePatient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
     @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(unique = true, length = 20)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
-
-    @Column(unique = true, length = 50)
-    private String employeeId;
+    private String patientName;
 
     @Column
     private Integer age;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    @Column(length = 500)
+    private String medicalIssue;
 
-    @Column(length = 100)
-    private String category; // Home Care, Marketing, Security, Health, Education
-
-    @Column(name = "parent_user_id")
-    private Long parentUserId; // For hierarchical structure
+    @Column(length = 255)
+    private String location;
 
     @Column(length = 100)
     private String village;
@@ -59,11 +49,11 @@ public class User {
     @Column(length = 100)
     private String state;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(length = 20)
+    private String contactNumber;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ServiceModuleStatus status;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -71,10 +61,16 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ActivityGallery> gallery;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = ServiceModuleStatus.ACTIVE;
+        }
     }
 
     @PreUpdate
