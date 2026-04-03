@@ -11,6 +11,14 @@ export type SignupRequest = {
   email: string;
   phone: string;
   password: string;
+  employeeId?: string;
+  age?: number;
+  gender?: string;
+  category?: string;
+  state?: string;
+  district?: string;
+  mandal?: string;
+  village?: string;
 };
 
 export type LoginRequest = {

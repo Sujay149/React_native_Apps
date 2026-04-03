@@ -21,6 +21,7 @@ import { trackEvent } from '@/utils/analytics';
 import { loginUser, signupUser } from '@/utils/auth-api';
 
 type AuthMode = 'login' | 'signup';
+type SignupStep = 1 | 2 | 3;
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,11 +30,20 @@ export default function LoginScreen() {
   const { hasHydrated } = useAppHydration();
 
   const [mode, setMode] = useState<AuthMode>('login');
+  const [signupStep, setSignupStep] = useState<SignupStep>(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [category, setCategory] = useState('');
+  const [village, setVillage] = useState('');
+  const [mandal, setMandal] = useState('');
+  const [district, setDistrict] = useState('');
+  const [state, setState] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,87 +58,172 @@ export default function LoginScreen() {
 
   const validateEmail = (value: string) => /.+@.+\..+/.test(value);
 
-  const handleAuth = async () => {
+  const validateStep1 = (): boolean => {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhone = phone.trim();
 
-    if (mode === 'signup' && !trimmedName) {
+    if (!trimmedName) {
       setError('Please enter your full name.');
-      trackEvent('user_signup_failed', { reason: 'missing_name' });
-      return;
+      return false;
     }
 
     if (!trimmedEmail) {
       setError('Please enter your email.');
-      trackEvent(mode === 'login' ? 'user_login_failed' : 'user_signup_failed', {
-        reason: 'missing_email',
-      });
-      return;
+      return false;
     }
 
     if (!validateEmail(trimmedEmail)) {
       setError('Please enter a valid email address.');
-      trackEvent(mode === 'login' ? 'user_login_failed' : 'user_signup_failed', {
-        reason: 'invalid_email',
-      });
-      return;
+      return false;
     }
 
-    if (mode === 'signup' && !trimmedPhone) {
+    if (!trimmedPhone) {
       setError('Please enter your phone number.');
-      trackEvent('user_signup_failed', { reason: 'missing_phone' });
-      return;
+      return false;
     }
 
-    if (password.trim().length < 4) {
-      setError('Password must be at least 4 characters.');
-      trackEvent(mode === 'login' ? 'user_login_failed' : 'user_signup_failed', {
-        reason: 'short_password',
-      });
-      return;
+    if (password.trim().length < 6) {
+      setError('Password must be at least 6 characters.');
+      return false;
     }
 
-    if (mode === 'signup' && password !== confirmPassword) {
+    if (password !== confirmPassword) {
       setError('Passwords do not match.');
-      trackEvent('user_signup_failed', { reason: 'password_mismatch' });
-      return;
+      return false;
     }
 
-    setError('');
-    setIsSubmitting(true);
+    return true;
+  };
 
-    try {
-      if (mode === 'signup') {
-        await signupUser({
-          name: trimmedName,
-          email: trimmedEmail,
-          phone: trimmedPhone,
-          password,
-        });
+  const validateStep2 = (): boolean => {
+    if (!employeeId.trim()) {
+      setError('Please enter your Employee ID.');
+      return false;
+    }
+    if (!age.trim()) {
+      setError('Please enter your age.');
+      return false;
+    }
+    if (!gender) {
+      setError('Please select your gender.');
+      return false;
+    }
+    if (!category) {
+      setError('Please select your service category.');
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = (): boolean => {
+    if (!state.trim()) {
+      setError('Please enter your state.');
+      return false;
+    }
+    if (!district.trim()) {
+      setError('Please enter your district.');
+      return false;
+    }
+    if (!mandal.trim()) {
+      setError('Please enter your mandal.');
+      return false;
+    }
+    if (!village.trim()) {
+      setError('Please enter your village.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    setError('');
+    if (signupStep === 1 && validateStep1()) {
+      setSignupStep(2);
+    } else if (signupStep === 2 && validateStep2()) {
+      setSignupStep(3);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (signupStep > 1) {
+      setSignupStep((prev) => (prev - 1) as SignupStep);
+      setError('');
+    }
+  };
+
+  const handleAuth = async () => {
+    if (mode === 'login') {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!trimmedEmail || !validateEmail(trimmedEmail)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+      if (password.trim().length < 6) {
+        setError('Password must be at least 6 characters.');
+        return;
       }
 
-      const auth = await loginUser({
-        email: trimmedEmail,
-        password,
-      });
+      setError('');
+      setIsSubmitting(true);
 
-      login(trimmedEmail, auth.accessToken);
-      router.replace('/(tabs)');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-      setError(message);
-      trackEvent(mode === 'login' ? 'user_login_failed' : 'user_signup_failed', {
-        reason: message,
-      });
-      return;
-    } finally {
-      setIsSubmitting(false);
+      try {
+        const auth = await loginUser({
+          email: trimmedEmail,
+          password,
+        });
+
+        login(trimmedEmail, auth.accessToken);
+        router.replace('/(tabs)');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+        setError(message);
+        trackEvent('user_login_failed', { reason: message });
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      trackEvent('user_login_success', { email: trimmedEmail });
+    } else {
+      // Signup mode - validate step 3 and submit
+      if (!validateStep3()) return;
+
+      setError('');
+      setIsSubmitting(true);
+
+      try {
+        await signupUser({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          password,
+          employeeId: employeeId.trim(),
+          age: parseInt(age, 10),
+          gender,
+          category,
+          state: state.trim(),
+          district: district.trim(),
+          mandal: mandal.trim(),
+          village: village.trim(),
+        });
+
+        const auth = await loginUser({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+
+        login(email.trim().toLowerCase(), auth.accessToken);
+        router.replace('/(tabs)');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+        setError(message);
+        trackEvent('user_signup_failed', { reason: message });
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      trackEvent('user_signup_success', { email: email.trim().toLowerCase() });
     }
-
-    trackEvent(mode === 'login' ? 'user_login_success' : 'user_signup_success', {
-      email: trimmedEmail,
-    });
   };
 
   const handlePressIn = () =>
@@ -185,6 +280,7 @@ export default function LoginScreen() {
                 <Pressable
                   onPress={() => {
                     setMode('login');
+                    setSignupStep(1);
                     setError('');
                   }}
                   style={[styles.modeSwitchButton, mode === 'login' && styles.modeSwitchButtonActive]}>
@@ -200,143 +296,408 @@ export default function LoginScreen() {
                 </Pressable>
               </View>
 
-              {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Name</Text>
-                  <View style={styles.inputWrap}>
-                    <MaterialCommunityIcons
-                      name="account-outline"
-                      size={20}
-                      color="#94A3B8"
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      value={name}
-                      onChangeText={(v: string) => {
-                        setName(v);
-                        if (error) setError('');
-                      }}
-                      style={styles.input}
-                      placeholder="Enter your full name"
-                      placeholderTextColor="#A1A1AA"
-                      autoCapitalize="words"
-                      returnKeyType="next"
-                    />
-                  </View>
+              {mode === 'signup' && (
+                <View style={styles.stepIndicator}>
+                  {[1, 2, 3].map((step) => (
+                    <View key={step} style={[styles.stepDot, step <= signupStep && styles.stepDotActive]} />
+                  ))}
+                  <Text style={styles.stepText}>Step {signupStep} of 3</Text>
                 </View>
-              ) : null}
-
-              {/* Email Field */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Email</Text>
-                <View style={styles.inputWrap}>
-                  <MaterialCommunityIcons
-                    name="email-outline"
-                    size={20}
-                    color="#94A3B8"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    value={email}
-                    onChangeText={(v: string) => {
-                      setEmail(v);
-                      if (error) setError('');
-                    }}
-                    style={styles.input}
-                    placeholder="Enter your email"
-                    placeholderTextColor="#A1A1AA"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    returnKeyType="next"
-                  />
-                </View>
-              </View>
+              )}
 
               {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Phone</Text>
-                  <View style={styles.inputWrap}>
-                    <MaterialCommunityIcons
-                      name="phone-outline"
-                      size={20}
-                      color="#94A3B8"
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      value={phone}
-                      onChangeText={(v: string) => {
-                        setPhone(v);
-                        if (error) setError('');
-                      }}
-                      style={styles.input}
-                      placeholder="Enter your phone number"
-                      placeholderTextColor="#A1A1AA"
-                      keyboardType="phone-pad"
-                      returnKeyType="next"
-                    />
-                  </View>
-                </View>
-              ) : null}
+                <>
+                  {signupStep === 1 && (
+                    <>
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Name</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="account-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={name}
+                            onChangeText={(v: string) => {
+                              setName(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your full name"
+                            placeholderTextColor="#A1A1AA"
+                            autoCapitalize="words"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
 
-              {/* Password Field */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View style={styles.inputWrap}>
-                  <MaterialCommunityIcons
-                    name="lock-outline"
-                    size={20}
-                    color="#94A3B8"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    value={password}
-                    onChangeText={(v: string) => {
-                      setPassword(v);
-                      if (error) setError('');
-                    }}
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#A1A1AA"
-                    secureTextEntry={!showPassword}
-                    returnKeyType="done"
-                    onSubmitEditing={handleAuth}
-                  />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={10} style={{ paddingHorizontal: 10 }}>
-                    <MaterialCommunityIcons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color="#94A3B8"
-                    />
-                  </Pressable>
-                </View>
-              </View>
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Email</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="email-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={email}
+                            onChangeText={(v: string) => {
+                              setEmail(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your email"
+                            placeholderTextColor="#A1A1AA"
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
 
-              {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Confirm Password</Text>
-                  <View style={styles.inputWrap}>
-                    <MaterialCommunityIcons
-                      name="lock-check-outline"
-                      size={20}
-                      color="#94A3B8"
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      value={confirmPassword}
-                      onChangeText={(v: string) => {
-                        setConfirmPassword(v);
-                        if (error) setError('');
-                      }}
-                      style={[styles.input, { flex: 1 }]}
-                      placeholder="Confirm your password"
-                      placeholderTextColor="#A1A1AA"
-                      secureTextEntry={!showPassword}
-                      returnKeyType="done"
-                      onSubmitEditing={handleAuth}
-                    />
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Phone</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="phone-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={phone}
+                            onChangeText={(v: string) => {
+                              setPhone(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your phone number"
+                            placeholderTextColor="#A1A1AA"
+                            keyboardType="phone-pad"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Password</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="lock-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={password}
+                            onChangeText={(v: string) => {
+                              setPassword(v);
+                              if (error) setError('');
+                            }}
+                            style={[styles.input, { flex: 1 }]}
+                            placeholder="Enter your password"
+                            placeholderTextColor="#A1A1AA"
+                            secureTextEntry={!showPassword}
+                            returnKeyType="next"
+                          />
+                          <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={10} style={{ paddingHorizontal: 10 }}>
+                            <MaterialCommunityIcons
+                              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                              size={20}
+                              color="#94A3B8"
+                            />
+                          </Pressable>
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Confirm Password</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="lock-check-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={confirmPassword}
+                            onChangeText={(v: string) => {
+                              setConfirmPassword(v);
+                              if (error) setError('');
+                            }}
+                            style={[styles.input, { flex: 1 }]}
+                            placeholder="Confirm your password"
+                            placeholderTextColor="#A1A1AA"
+                            secureTextEntry={!showPassword}
+                            returnKeyType="done"
+                          />
+                        </View>
+                      </View>
+                    </>
+                  )}
+
+                  {signupStep === 2 && (
+                    <>
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Employee ID</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="identifier"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={employeeId}
+                            onChangeText={(v: string) => {
+                              setEmployeeId(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter employee ID"
+                            placeholderTextColor="#A1A1AA"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Age</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="cake-variant-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={age}
+                            onChangeText={(v: string) => {
+                              setAge(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your age"
+                            placeholderTextColor="#A1A1AA"
+                            keyboardType="numeric"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Gender</Text>
+                        <View style={styles.genderRow}>
+                          {['MALE', 'FEMALE', 'OTHER'].map((g) => (
+                            <Pressable
+                              key={g}
+                              onPress={() => {
+                                setGender(g);
+                                if (error) setError('');
+                              }}
+                              style={[
+                                styles.genderBtn,
+                                gender === g && styles.genderBtnActive,
+                              ]}>
+                              <Text style={[
+                                styles.genderText,
+                                gender === g && styles.genderTextActive,
+                              ]}>
+                                {g.charAt(0) + g.slice(1).toLowerCase()}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Service Category</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                          {['Home Care', 'Marketing', 'Security', 'Health', 'Education'].map((cat) => (
+                            <Pressable
+                              key={cat}
+                              onPress={() => {
+                                setCategory(cat);
+                                if (error) setError('');
+                              }}
+                              style={[
+                                styles.categoryBtn,
+                                category === cat && styles.categoryBtnActive,
+                              ]}>
+                              <Text style={[
+                                styles.categoryText,
+                                category === cat && styles.categoryTextActive,
+                              ]}>
+                                {cat}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </>
+                  )}
+
+                  {signupStep === 3 && (
+                    <>
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>State</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="map-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={state}
+                            onChangeText={(v: string) => {
+                              setState(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your state"
+                            placeholderTextColor="#A1A1AA"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>District</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="map-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={district}
+                            onChangeText={(v: string) => {
+                              setDistrict(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your district"
+                            placeholderTextColor="#A1A1AA"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Mandal</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="map-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={mandal}
+                            onChangeText={(v: string) => {
+                              setMandal(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your mandal"
+                            placeholderTextColor="#A1A1AA"
+                            returnKeyType="next"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.fieldGroup}>
+                        <Text style={styles.fieldLabel}>Village</Text>
+                        <View style={styles.inputWrap}>
+                          <MaterialCommunityIcons
+                            name="home-outline"
+                            size={20}
+                            color="#94A3B8"
+                            style={styles.inputIcon}
+                          />
+                          <TextInput
+                            value={village}
+                            onChangeText={(v: string) => {
+                              setVillage(v);
+                              if (error) setError('');
+                            }}
+                            style={styles.input}
+                            placeholder="Enter your village"
+                            placeholderTextColor="#A1A1AA"
+                            returnKeyType="done"
+                          />
+                        </View>
+                      </View>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Email Field for Login */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Email or Employee ID</Text>
+                    <View style={styles.inputWrap}>
+                      <MaterialCommunityIcons
+                        name="email-outline"
+                        size={20}
+                        color="#94A3B8"
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        value={email}
+                        onChangeText={(v: string) => {
+                          setEmail(v);
+                          if (error) setError('');
+                        }}
+                        style={styles.input}
+                        placeholder="Enter your email or employee ID"
+                        placeholderTextColor="#A1A1AA"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        returnKeyType="next"
+                      />
+                    </View>
                   </View>
-                </View>
-              ) : null}
+
+                  {/* Password Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Password</Text>
+                    <View style={styles.inputWrap}>
+                      <MaterialCommunityIcons
+                        name="lock-outline"
+                        size={20}
+                        color="#94A3B8"
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        value={password}
+                        onChangeText={(v: string) => {
+                          setPassword(v);
+                          if (error) setError('');
+                        }}
+                        style={[styles.input, { flex: 1 }]}
+                        placeholder="Enter your password"
+                        placeholderTextColor="#A1A1AA"
+                        secureTextEntry={!showPassword}
+                        returnKeyType="done"
+                        onSubmitEditing={handleAuth}
+                      />
+                      <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={10} style={{ paddingHorizontal: 10 }}>
+                        <MaterialCommunityIcons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={20}
+                          color="#94A3B8"
+                        />
+                      </Pressable>
+                    </View>
+                  </View>
+                </>
+              )}
 
               {mode === 'login' ? (
                 <View style={styles.optionsRow}>
@@ -356,27 +717,50 @@ export default function LoginScreen() {
               ) : null}
 
               {/* Continue Button */}
-              <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 10 }}>
-                <Pressable
-                  onPress={handleAuth}
-                  onPressIn={handlePressIn}
-                  onPressOut={handlePressOut}
-                  disabled={isSubmitting}
-                  style={[styles.btn, isSubmitting && styles.btnDisabled]}>
-                  <Text style={styles.btnText}>{isSubmitting ? 'Please wait...' : mode === 'login' ? 'Log In' : 'Create Account'}</Text>
-                </Pressable>
-              </Animated.View>
+              {mode === 'signup' && signupStep < 3 ? (
+                <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 10 }}>
+                  <Pressable
+                    onPress={handleNextStep}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    style={[styles.btn]}>
+                    <Text style={styles.btnText}>Next</Text>
+                  </Pressable>
+                </Animated.View>
+              ) : (
+                <Animated.View style={{ transform: [{ scale: buttonScale }], marginTop: 10 }}>
+                  <Pressable
+                    onPress={handleAuth}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    disabled={isSubmitting}
+                    style={[styles.btn, isSubmitting && styles.btnDisabled]}>
+                    <Text style={styles.btnText}>{isSubmitting ? 'Please wait...' : mode === 'login' ? 'Log In' : 'Create Account'}</Text>
+                  </Pressable>
+                </Animated.View>
+              )}
 
-              <Pressable
-                onPress={() => {
-                  setMode((prev) => (prev === 'login' ? 'signup' : 'login'));
-                  setError('');
-                }}
-                style={styles.switchAuthModeLink}>
-                <Text style={styles.switchAuthModeText}>
-                  {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
-                </Text>
-              </Pressable>
+              {mode === 'signup' && signupStep > 1 && (
+                <Pressable
+                  onPress={handlePrevStep}
+                  style={styles.secondaryBtn}>
+                  <Text style={styles.secondaryBtnText}>Back</Text>
+                </Pressable>
+              )}
+
+              {(mode === 'login' || signupStep === 1) && (
+                <Pressable
+                  onPress={() => {
+                    setMode((prev) => (prev === 'login' ? 'signup' : 'login'));
+                    setSignupStep(1);
+                    setError('');
+                  }}
+                  style={styles.switchAuthModeLink}>
+                  <Text style={styles.switchAuthModeText}>
+                    {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
+                  </Text>
+                </Pressable>
+              )}
 
               <View style={styles.orContainer}>
                  <View style={styles.orLine} />
@@ -524,5 +908,94 @@ const styles = StyleSheet.create({
      fontWeight: '500',
      color: '#94A3B8',
      lineHeight: 18,
-  }
+  },
+
+  stepIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  stepDotActive: {
+    backgroundColor: '#1E1B4B',
+  },
+  stepText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+
+  genderRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  genderBtn: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  genderBtnActive: {
+    backgroundColor: '#1E1B4B',
+    borderColor: '#1E1B4B',
+  },
+  genderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  genderTextActive: {
+    color: '#FFFFFF',
+  },
+
+  categoryScroll: {
+    flexGrow: 0,
+  },
+  categoryBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    marginRight: 8,
+  },
+  categoryBtnActive: {
+    backgroundColor: '#1E1B4B',
+    borderColor: '#1E1B4B',
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  categoryTextActive: {
+    color: '#FFFFFF',
+  },
+
+  secondaryBtn: {
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  secondaryBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E1B4B',
+  },
 });

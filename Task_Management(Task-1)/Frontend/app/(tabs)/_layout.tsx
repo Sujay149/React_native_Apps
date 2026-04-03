@@ -27,6 +27,15 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
+				name="modules"
+				options={{
+					title: 'Modules',
+					tabBarIcon: ({ color, size }) => (
+						<MaterialCommunityIcons name="apps" size={size} color={color} />
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="map"
 				options={{
 					title: 'Map',
