@@ -11,6 +11,7 @@ import {
   View,
   StyleSheet,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ type AuthMode = 'login' | 'signup';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { height } = useWindowDimensions();
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const login = useAppStore((state) => state.login);
   const { hasHydrated } = useAppHydration();
@@ -40,6 +42,7 @@ export default function LoginScreen() {
 
   const buttonScale = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const isCompactLayout = height < 860 || mode === 'signup';
 
   // Fade-in on mount
   useRef(
@@ -159,13 +162,13 @@ export default function LoginScreen() {
           behavior={Platform.select({ ios: 'padding', android: undefined })}
           style={{ flex: 1 }}>
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerStyle={[styles.scroll, isCompactLayout && styles.scrollCompact]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
               
               {/* App Icon */}
-              <View style={styles.iconContainer}>
+              <View style={[styles.iconContainer, isCompactLayout && styles.iconContainerCompact]}>
                  <View style={styles.appIcon}>
                     <Image
                      source={require('../assets/images/logo.png')}
@@ -176,7 +179,7 @@ export default function LoginScreen() {
               </View>
 
               {/* Hero */}
-              <View style={styles.hero}>
+              <View style={[styles.hero, isCompactLayout && styles.heroCompact]}>
                 <Text style={styles.heroTitle}>Get Started Today</Text>
                 <Text style={styles.heroSub}>Login or create your account to sync with BackendTask.</Text>
               </View>
@@ -201,7 +204,7 @@ export default function LoginScreen() {
               </View>
 
               {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
+                <View style={[styles.fieldGroup, isCompactLayout && styles.fieldGroupCompact]}>
                   <Text style={styles.fieldLabel}>Name</Text>
                   <View style={styles.inputWrap}>
                     <MaterialCommunityIcons
@@ -227,7 +230,7 @@ export default function LoginScreen() {
               ) : null}
 
               {/* Email Field */}
-              <View style={styles.fieldGroup}>
+              <View style={[styles.fieldGroup, isCompactLayout && styles.fieldGroupCompact]}>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <View style={styles.inputWrap}>
                   <MaterialCommunityIcons
@@ -253,7 +256,7 @@ export default function LoginScreen() {
               </View>
 
               {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
+                <View style={[styles.fieldGroup, isCompactLayout && styles.fieldGroupCompact]}>
                   <Text style={styles.fieldLabel}>Phone</Text>
                   <View style={styles.inputWrap}>
                     <MaterialCommunityIcons
@@ -279,7 +282,7 @@ export default function LoginScreen() {
               ) : null}
 
               {/* Password Field */}
-              <View style={styles.fieldGroup}>
+              <View style={[styles.fieldGroup, isCompactLayout && styles.fieldGroupCompact]}>
                 <Text style={styles.fieldLabel}>Password</Text>
                 <View style={styles.inputWrap}>
                   <MaterialCommunityIcons
@@ -312,7 +315,7 @@ export default function LoginScreen() {
               </View>
 
               {mode === 'signup' ? (
-                <View style={styles.fieldGroup}>
+                <View style={[styles.fieldGroup, isCompactLayout && styles.fieldGroupCompact]}>
                   <Text style={styles.fieldLabel}>Confirm Password</Text>
                   <View style={styles.inputWrap}>
                     <MaterialCommunityIcons
@@ -339,7 +342,7 @@ export default function LoginScreen() {
               ) : null}
 
               {mode === 'login' ? (
-                <View style={styles.optionsRow}>
+                <View style={[styles.optionsRow, isCompactLayout && styles.optionsRowCompact]}>
                   <View style={styles.checkboxRow}>
                     <View style={styles.checkbox}></View>
                     <Text style={styles.rememberText}>Remember me</Text>
@@ -378,7 +381,7 @@ export default function LoginScreen() {
                 </Text>
               </Pressable>
 
-              <View style={styles.orContainer}>
+                <View style={[styles.orContainer, isCompactLayout && styles.orContainerCompact]}>
                  <View style={styles.orLine} />
                  <Text style={styles.orText}>or</Text>
                  <View style={styles.orLine} />
@@ -395,7 +398,7 @@ export default function LoginScreen() {
                  </Pressable>
               </View>
               
-              <Text style={styles.footerText}>
+              <Text style={[styles.footerText, isCompactLayout && styles.footerTextCompact]}>
                 By tapping Continue, you agree to our{"\n"}
                 <Text style={{fontWeight: '700', color: '#1E1B4B'}}>Privacy Policy & Terms of Service</Text>
               </Text>
@@ -411,16 +414,20 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1A1D28' },
-  scroll: { flexGrow: 1, paddingHorizontal: 28, paddingVertical: 40 },
-  container: { flex: 1, justifyContent: 'center', paddingTop: 20 },
+  scroll: { flexGrow: 1, paddingHorizontal: 28, paddingTop: 16, paddingBottom: 32 },
+  scrollCompact: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
+  container: { flex: 1, justifyContent: 'flex-start', paddingTop: 8 },
   
   iconContainer: {
      alignItems: 'center',
      marginBottom: 30,
   },
+  iconContainerCompact: {
+    marginBottom: 16,
+  },
   appIcon: {
       width: 50,
-      height: 150,
+      height: 90,
      alignItems: 'center',
      justifyContent: 'center',
   },
@@ -430,6 +437,7 @@ const styles = StyleSheet.create({
   },
 
   hero: { marginBottom: 36, alignItems: 'center' },
+  heroCompact: { marginBottom: 20 },
   heroTitle: { fontSize: 26, fontWeight: '800', color: '#1E1B4B', letterSpacing: -0.5, marginBottom: 8 },
   heroSub: { fontSize: 13, color: '#64748B', textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 },
 
@@ -460,6 +468,7 @@ const styles = StyleSheet.create({
   },
 
   fieldGroup: { marginBottom: 16 },
+  fieldGroupCompact: { marginBottom: 12 },
   fieldLabel: {
     fontSize: 13, fontWeight: '700', color: '#1E1B4B',
     marginBottom: 8, paddingLeft: 4,
@@ -475,6 +484,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 14, fontWeight: '600', color: '#1E1B4B' },
 
   optionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, marginTop: 4 },
+  optionsRowCompact: { marginBottom: 16 },
   checkboxRow: { flexDirection: 'row', alignItems: 'center' },
   checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: '#CBD5E1', marginRight: 8 },
   rememberText: { fontSize: 13, color: '#64748B', fontWeight: '500' },
@@ -507,6 +517,7 @@ const styles = StyleSheet.create({
   },
 
   orContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
+  orContainerCompact: { marginVertical: 20 },
   orLine: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
   orText: { textAlign: 'center', color: '#94A3B8', fontSize: 13, marginHorizontal: 16, fontWeight: '500' },
 
@@ -524,5 +535,8 @@ const styles = StyleSheet.create({
      fontWeight: '500',
      color: '#94A3B8',
      lineHeight: 18,
-  }
+  },
+  footerTextCompact: {
+    marginTop: 20,
+  },
 });

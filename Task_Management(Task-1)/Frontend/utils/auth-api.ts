@@ -63,7 +63,34 @@ const getDefaultBaseUrl = () => {
   return 'http://localhost:8080';
 };
 
-export const BACKEND_BASE_URL = (configuredBaseUrl || getDefaultBaseUrl()).replace(/\/$/, '');
+const getResolvedConfiguredBaseUrl = () => {
+  if (!configuredBaseUrl) {
+    return null;
+  }
+
+  // On native devices/emulators, localhost refers to the device itself.
+  if (Platform.OS !== 'web') {
+    const localhostLike = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i;
+    if (localhostLike.test(configuredBaseUrl)) {
+      const expoHostIp = getExpoHostIp();
+      if (expoHostIp) {
+        return configuredBaseUrl.replace(localhostLike, (_match, _host, port = ':8080', path = '') => {
+          return `http://${expoHostIp}${port}${path}`;
+        });
+      }
+
+      if (Platform.OS === 'android') {
+        return configuredBaseUrl.replace(localhostLike, (_match, _host, port = ':8080', path = '') => {
+          return `http://10.0.2.2${port}${path}`;
+        });
+      }
+    }
+  }
+
+  return configuredBaseUrl;
+};
+
+export const BACKEND_BASE_URL = (getResolvedConfiguredBaseUrl() || getDefaultBaseUrl()).replace(/\/$/, '');
 
 const getErrorMessage = (data: unknown, status: number) => {
   if (data && typeof data === 'object') {
